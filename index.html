@@ -1017,7 +1017,13 @@ window.poselBack = function () {
   const tabChatTampil = $("tabChat") && $("tabChat").style.display !== "none";
   const diMain = document.getElementById("pageMain").classList.contains("active");
   if (diMain && !tabChatTampil) { pindahTab("tabChat"); return true; }
-  toastPosel("Tekan tombol Home untuk keluar");
+  const sekarang = Date.now();
+  if (window.__backTerakhir && sekarang - window.__backTerakhir < 2200) {
+    window.__backTerakhir = 0;
+    return false;
+  }
+  window.__backTerakhir = sekarang;
+  toastPosel("Tekan sekali lagi untuk keluar");
   return true;
 };
 function toastPosel(t) {
