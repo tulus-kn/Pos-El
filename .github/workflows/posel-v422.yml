@@ -1,0 +1,27 @@
+name: posel-v422
+on:
+  push:
+    paths:
+      - '.github/posel_v422.txt'
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy v4.2.2
+        run: |
+          curl -fsSL 'https://aka.doubaocdn.com/s/2unp8VPlDN' -o /tmp/new.html
+          test -s /tmp/new.html
+          grep -q 'viewport-fit=cover' /tmp/new.html
+          grep -q 'safe-area-inset-bottom' /tmp/new.html
+          python3 -c "import re;s=open('/tmp/new.html').read();m=re.search(r'<script type=\"module\">(.+?)</script>',s,re.S);open('/tmp/m.js','w').write(m.group(1))"
+          node --check /tmp/m.js
+          cp /tmp/new.html index.html
+          git config user.name 'Pos-El Bot'
+          git config user.email 'bot@pos-el.local'
+          git rm -f .github/posel_v422.txt .github/workflows/posel-v422.yml
+          git add -A
+          git commit -m 'v4.2.2: bar bawah tidak terpotong di HP dengan tombol navigasi'
+          git push origin HEAD:main
