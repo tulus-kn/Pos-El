@@ -299,6 +299,7 @@ body.chat-aktif { overflow: hidden; height: 100%; }
       <label style="font-size:13px;display:flex;gap:8px;align-items:center">
         <input type="checkbox" id="ckGetarPing" checked> Getar saat menerima Ping
         <button class="btn-bbm" style="margin-top:10px" onclick="tesGetar()">Tes Getar</button>
+        <button class="btn-bbm" onclick="mintaIzinNotif()">Izinkan akses notifikasi (lagu dari app lain)</button>
       </label>
       <div style="display:flex;gap:8px;margin-top:14px">
         <button onclick="tesPing()" class="btn ping" style="flex:1">🔔 Tes Ping</button>
@@ -428,8 +429,19 @@ function tesGetar(){
     if (window.PosElNative && typeof window.PosElNative.vibrate === 'function') { window.PosElNative.vibrate(pola.join(',')); jalur = 'native'; }
     else if (navigator.vibrate) { navigator.vibrate(pola); jalur = 'navigator.vibrate'; }
   } catch (e) { info.push('Error: ' + e); }
+  if (window.PosElNative && typeof window.PosElNative.izinNotifAktif === 'function') {
+    try { info.push('Akses notifikasi (judul lagu luar): ' + (window.PosElNative.izinNotifAktif() ? 'AKTIF' : 'belum diizinkan')); } catch (e) {}
+  }
   info.push('Coba getar lewat: ' + jalur);
   alert(info.join('\n'));
+}
+function mintaIzinNotif(){
+  if (window.PosElNative && typeof window.PosElNative.bukaIzinNotif === 'function') {
+    window.PosElNative.bukaIzinNotif();
+    alert('Di layar berikut, cari "Pos-El" lalu nyalakan aksesnya. Setelah itu judul lagu/video dari app lain akan tampil di daftar chat.');
+    return;
+  }
+  alert('Fitur judul lagu dari app lain hanya ada di APK Pos-El. Di browser, Android tidak mengizinkan.');
 }
 function pilihFile(){
   var f = document.getElementById('inpFile');
@@ -1179,12 +1191,29 @@ function sendPing() {
   kirimKeBackend("ping", "🔔 PING!");
 }
 let npTerakhir = null;
+let npDalamApp = "";
+let npTerkirim = "";
 async function kirimNowPlaying(t) {
+  npDalamApp = t || "";
+  await npSync();
+}
+async function npSync() {
   if (mode !== "cloud" || !sb || !me) return;
+  let luar = "";
+  try {
+    if (window.PosElNative && typeof window.PosElNative.nowPlaying === "function") {
+      const v = window.PosElNative.nowPlaying();
+      if (v && v !== "__NOPERM__") luar = "🎵 " + v;
+    }
+  } catch (e) {}
+  const t = luar || npDalamApp;
+  if (t === npTerkirim) return;
+  npTerkirim = t;
   try {
     await sb.from("posel_profiles").update({ now_playing: t || null, now_playing_at: new Date().toISOString() }).eq("id", me.id);
   } catch (e) {}
 }
+setInterval(() => { if (me) npSync(); }, 20000);
 function tampilNowPlayingChat(t) {
   const el = $("chatNp");
   if (!el) return;
