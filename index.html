@@ -9,14 +9,18 @@
 body{background:#222;background-image:radial(#333 1px,transparent 1px);background-size:20px 20px;padding:1rem}
 .container{max-width:420px;margin:0 auto;background:#000;border-radius:20px;overflow:hidden;border:3px solid #2563eb;box-shadow:0 0 25px #2563eb44}
 .header{background:linear-gradient(90deg,#1d4ed8,#3b82f6);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;font-weight:bold;font-size:19px}
-.header-pin{font-size:16px;opacity:0.9}
+.header-pin{font-size:14px;opacity:0.9}
+.subbar{background:#0b1526;color:#cfe3ff;padding:6px 14px;font-size:12px;display:flex;justify-content:space-between}
+.badge-lokal{background:#a60;color:#fff;font-size:11px;padding:1px 8px;border-radius:10px}
+.badge-cloud{background:#080;color:#fff;font-size:11px;padding:1px 8px;border-radius:10px}
 
 .contact-list{background:#000}
 .contact-item{display:flex;gap:12px;padding:12px 16px;border-bottom:#222 solid 1px;align-items:center;cursor:pointer;transition:0.2s}
 .contact-item:hover{background:#111}
-.avatar{width:46px;height:46px;border-radius:50%;background:#3366cc;color:#fff;display:grid;place-items:center;font-weight:bold;font-size:18px}
+.avatar{width:46px;height:46px;border-radius:50%;background:#3366cc;color:#fff;display:grid;place-items:center;font-weight:bold;font-size:18px;flex:none}
 .contact-info h3{color:#fff;font-size:16px}
 .contact-info p{color:#888;font-size:13px;margin-top:2px}
+.pin-text{color:#8cf}
 
 .chat-screen{display:none;height:580px;background:#111;flex-direction:column}
 .chat-topbar{background:#1d4ed8;color:#fff;padding:12px 16px;display:flex;gap:10px;align-items:center}
@@ -27,53 +31,137 @@ body{background:#222;background-image:radial(#333 1px,transparent 1px);backgroun
 .msg-bubble{padding:9px 12px;border-radius:12px;font-size:14px}
 .msg.in .msg-bubble{background:#333;color:#fff;border-bottom-left-radius:3px}
 .msg.out .msg-bubble{background:#2563eb;color:#fff;border-bottom-right-radius:3px}
+.msg-ping .msg-bubble{background:#7f1d1d !important;border:2px solid #dc2626}
 .status{font-size:11px;color:#777;text-align:right;margin-top:2px}
+.status-R{color:#0f0}.status-D{color:#ff0}.status-S{color:#888}
 
 .chat-input-area{display:flex;padding:10px;background:#000;gap:8px}
 #msgInput{flex:1;padding:10px;border-radius:12px;border:0;outline:none}
 .btn{border:0;padding:0 14px;border-radius:12px;font-weight:bold;cursor:pointer;height:40px}
 .send{background:#2563eb;color:#fff}
 .ping{background:#dc2626;color:#fff}
+
+.tabbar{display:flex;background:#111}
+.tab-btn{flex:1;padding:9px 0;text-align:center;font-size:13px;cursor:pointer;background:#111;color:#ccc;border:0}
+.tab-btn.aktif{background:#1d4ed8;color:#fff}
+.pane{padding:4px 0 10px}
+.pane h4{color:#888;font-size:12px;padding:8px 16px 2px}
+.rowbtn{display:flex;gap:8px;padding:10px 16px}
+.rowbtn button{flex:1;background:#1e293b;color:#fff;border:0;padding:9px 0;border-radius:10px;cursor:pointer}
+.field{padding:8px 16px}
+.field label{color:#888;font-size:12px;display:block;margin-bottom:4px}
+.field input{width:100%;padding:10px;border-radius:10px;border:1px solid #333;background:#000;color:#fff;outline:none}
+.btn-big{width:100%;padding:11px;border:0;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:6px}
+.btn-blue{background:#2563eb;color:#fff}
+.btn-green{background:#15803d;color:#fff}
+.btn-grey{background:#334155;color:#fff}
+.msg-info{color:#facc15;font-size:12px;padding:6px 16px;min-height:18px}
+.kosong{color:#666;font-size:13px;padding:12px 16px}
+#bannerPing{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:10px 18px;border-radius:12px;box-shadow:0 4px 20px #000;z-index:50;font-weight:bold;display:none}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
     <span>POS-EL</span>
-    <span class="header-pin">PIN: 7A2B9C0E</span>
+    <span class="header-pin">PIN: <span id="myPin">—</span></span>
+  </div>
+  <div class="subbar">
+    <span id="cloudBadge">⏳ menghubungkan…</span>
+    <span id="modeBadge"></span>
   </div>
 
-  <div id="contactPage" class="contact-list">
-    <div class="contact-item" onclick="openChat('Teman A','91F28D44')">
-      <div class="avatar">A</div>
-      <div class="contact-info">
-        <h3>Teman A</h3>
-        <p>91F28D44</p>
-      </div>
-    </div>
-    <div class="contact-item" onclick="openChat('Teman B','C7710FA3')">
-      <div class="avatar">B</div>
-      <div class="contact-info">
-        <h3>Teman B</h3>
-        <p>C7710FA3</p>
-      </div>
-    </div>
-    <div class="contact-item" onclick="openChat('Teman C','22BB5E77')">
-      <div class="avatar">C</div>
-      <div class="contact-info">
-        <h3>Teman C</h3>
-        <p>22BB5E77</p>
-      </div>
+  <!-- ============ MASUK / DAFTAR ============ -->
+  <div id="authPage">
+    <div style="padding:16px;color:#fff">
+      <h2 style="font-size:18px;margin-bottom:4px">Pesan Jadul ala BBM</h2>
+      <p style="color:#888;font-size:13px;margin-bottom:10px">Daftar hanya pakai username, nama, dan password. Tanpa email, tanpa nomor HP. Setiap akun dapat PIN 8 karakter.</p>
+      <div id="authPesan" class="msg-info" style="padding:0 0 6px"></div>
+      <div class="field" style="padding:0 0 8px"><label>Username (3–20 karakter, huruf kecil, angka, titik, _)</label>
+        <input id="inUser" placeholder="contoh: andi09"></div>
+      <div class="field" style="padding:0 0 8px"><label>Nama tampilan</label>
+        <input id="inNama" placeholder="contoh: Andi"></div>
+      <div class="field" style="padding:0 0 10px"><label>Password (min. 4 karakter)</label>
+        <input id="inPass" type="password" placeholder="••••"></div>
+      <button id="btnMasuk" class="btn-big btn-blue">Masuk</button>
+      <button id="btnDaftar" class="btn-big btn-green">Daftar Akun Baru</button>
+      <details style="margin-top:14px;color:#888;font-size:12px">
+        <summary style="cursor:pointer;color:#7dd3fc">⚙️ Pengaturan Supabase (untuk sinkron antar HP)</summary>
+        <p style="margin-top:8px">Supabase URL sudah diisi. Tempel <b>anon public key</b> dari dashboard Supabase kamu (Settings → API) di bawah ini. Kunci ini tersimpan hanya di HP ini.</p>
+        <input id="inAnonKey" style="width:100%;padding:10px;border-radius:10px;border:1px solid #333;background:#000;color:#fff;margin-top:8px" placeholder="eyJhbGciOi… (anon key)">
+        <button id="btnSimpanKey" class="btn-big btn-grey">Simpan Kunci</button>
+        <p style="margin-top:8px">Belum ada tabel di Supabase? Jalankan file <b>supabase/schema.sql</b> dari repo ini di SQL Editor, dan matikan <b>Confirm email</b> di Authentication → Settings. Kalau tidak diisi, aplikasi jalan dalam <b>Mode Lokal</b> (demo, hanya di HP ini).</p>
+        <button id="btnModeLokal" class="btn-big" style="background:#92600a;color:#fff">Coba Mode Lokal (demo)</button>
+      </details>
     </div>
   </div>
 
+  <!-- ============ UTAMA ============ -->
+  <div id="mainPage" style="display:none">
+    <div class="tabbar">
+      <button class="tab-btn aktif" data-tab="tabChat" onclick="pindahTab('tabChat')">💬 Chat</button>
+      <button class="tab-btn" data-tab="tabKontak" onclick="pindahTab('tabKontak')">👥 Kontak</button>
+      <button class="tab-btn" data-tab="tabKabar" onclick="pindahTab('tabKabar')">📣 Kabar</button>
+      <button class="tab-btn" data-tab="tabSetting" onclick="pindahTab('tabSetting')">⚙️ Saya</button>
+    </div>
+
+    <div id="tabChat" class="pane">
+      <div id="daftarChat" class="contact-list"></div>
+      <div class="rowbtn">
+        <button onclick="buatGrupPrompt()">+ Buat Grup</button>
+        <button onclick="broadcastPrompt()">📢 Broadcast</button>
+      </div>
+    </div>
+
+    <div id="tabKontak" class="pane" style="display:none">
+      <div class="field"><label>Tambah teman pakai PIN</label>
+        <div style="display:flex;gap:8px">
+          <input id="inPinTeman" placeholder="PIN 8 karakter" maxlength="8" style="text-transform:uppercase">
+          <button onclick="tambahTeman()" class="btn send" style="height:40px">Tambah</button>
+        </div>
+        <div id="pesanKontak" class="msg-info" style="padding:4px 0 0"></div>
+      </div>
+      <h4>Undangan masuk</h4>
+      <div id="daftarUndangan"></div>
+      <h4>Kontak saya</h4>
+      <div id="daftarKontak"></div>
+    </div>
+
+    <div id="tabKabar" class="pane" style="display:none">
+      <div class="field"><label>Status saya</label>
+        <div style="display:flex;gap:8px">
+          <input id="inStatus" placeholder="Lagi apa?">
+          <button onclick="simpanStatus()" class="btn send" style="height:40px">Simpan</button>
+        </div>
+      </div>
+      <div id="daftarKabar"></div>
+    </div>
+
+    <div id="tabSetting" class="pane" style="display:none;padding:14px 16px;color:#fff">
+      <p style="margin-bottom:8px">Nama: <b id="setNama"></b></p>
+      <p style="margin-bottom:8px">Username: <b id="setUser"></b></p>
+      <p style="margin-bottom:8px">PIN saya: <b id="setPin" class="pin-text" style="font-size:17px"></b>
+        <button onclick="salinPin()" class="btn" style="background:#334155;color:#fff;height:30px;font-size:12px">Salin PIN</button></p>
+      <p style="margin-bottom:8px">Mode: <span id="setMode"></span></p>
+      <label style="font-size:13px;display:flex;gap:8px;align-items:center">
+        <input type="checkbox" id="ckGetarPing" checked> Getar saat menerima Ping
+      </label>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="tesPing()" class="btn ping" style="flex:1">🔔 Tes Ping</button>
+        <button onclick="keluarAkun()" class="btn" style="flex:1;background:#334155;color:#fff">Keluar</button>
+      </div>
+      <p style="color:#666;font-size:12px;margin-top:12px">Ping: kirim dari dalam chat. HP penerima bergetar + bunyi + banner merah.</p>
+    </div>
+  </div>
+
+  <!-- ============ CHAT ============ -->
   <div id="chatPage" class="chat-screen">
     <div class="chat-topbar">
       <button class="back-btn" onclick="closeChat()">←</button>
       <div class="avatar" id="chatAvatar">A</div>
       <div>
         <div id="chatName">Teman A</div>
-        <div style="font-size:12px;opacity:0.8" id="chatPin">91F28D44</div>
+        <div style="font-size:12px;opacity:0.8" id="chatPin">—</div>
       </div>
     </div>
     <div class="chat-area" id="chatBox"></div>
@@ -85,64 +173,532 @@ body{background:#222;background-image:radial(#333 1px,transparent 1px);backgroun
   </div>
 </div>
 
-<script>
-const audioPing = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3");
-let currentName,currentPin;
-
-function openChat(n,p){
-  currentName=n;currentPin=p;
-  document.getElementById("chatName").textContent=n;
-  document.getElementById("chatPin").textContent=p;
-  document.getElementById("chatAvatar").textContent=n.slice(-1);
-  document.getElementById("contactPage").style.display="none";
-  document.getElementById("chatPage").style.display="flex";
+<div id="bannerPing">🔔 PING! dari <span id="bannerPingDari"></span></div>
+<audio id="suaraPing">
+  <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQAtk8N2QDp+ffx96r6vT3d29vbP//8HAA==" type="audio/wav">
+</audio>
+<script type="module">
+/* Pos-El v3 — tampilan refactor terbaru + backend Supabase (sinkron antar HP).
+   Kalau Supabase belum disiapkan, aplikasi jalan Mode Lokal (demo, label jelas). */
+let createClient = null;
+try {
+  ({ createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"));
+} catch (e) {
+  console.warn("CDN Supabase tidak bisa dimuat, mode cloud tidak tersedia:", e);
 }
 
-function closeChat(){
-  document.getElementById("contactPage").style.display="block";
-  document.getElementById("chatPage").style.display="none";
+const SUPABASE_URL = "https://ubuqxmxkseoslxzruugr.supabase.co";
+const LS_KEY = "posel.anonkey";
+const LS_LOCAL = "posel.localdb";
+const LS_PING = "posel.pingvibrate";
+const $ = (id) => document.getElementById(id);
+
+let sb = null;
+let mode = "none"; // "cloud" | "local" | "none"
+let me = null;
+let kontakSaya = [], undangan = [], grupSaya = [];
+let chatAktif = null; // {kind:'dm'|'group', id, nama, pin, peerId}
+let elPesan = {};
+let timerPoll = null;
+const audioPingMixkit = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3");
+
+function acakPin() {
+  const h = "0123456789ABCDEF";
+  const b = new Uint8Array(8);
+  crypto.getRandomValues(b);
+  return [...b].map((x) => h[x % 16]).join("");
+}
+function uid() { return "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function jam(iso) { try { return new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }); } catch { return ""; } }
+function getarPing() {
+  if (localStorage.getItem(LS_PING) === "0") return;
+  try { if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 300]); } catch {}
+}
+function putarPing() {
+  try { audioPingMixkit.currentTime = 0; audioPingMixkit.play().catch(() => { const a = $("suaraPing"); a.currentTime = 0; a.play().catch(() => {}); }); } catch {}
+}
+function tampilPing(dari) {
+  $("bannerPingDari").textContent = dari;
+  $("bannerPing").style.display = "block";
+  getarPing(); putarPing();
+  setTimeout(() => { $("bannerPing").style.display = "none"; }, 3500);
+}
+function setBadge() {
+  const b = $("cloudBadge"), m = $("modeBadge");
+  if (mode === "cloud") { b.textContent = "☁️ Cloud: Terhubung"; m.innerHTML = '<span class="badge-cloud">CLOUD — sinkron antar HP</span>'; }
+  else if (mode === "local") { b.textContent = "📱 Mode Lokal"; m.innerHTML = '<span class="badge-lokal">MODE LOKAL — hanya di HP ini</span>'; }
+  else { b.textContent = "⚠️ Belum tersambung"; m.textContent = ""; }
+  if (me) $("myPin").textContent = me.pin;
 }
 
-function addMsg(text,tipe,stat="S"){
-  const box=document.getElementById("chatBox");
-  const d=document.createElement("div");
-  d.className="msg "+tipe;
-  d.innerHTML=`<div class="msg-bubble">${text}</div><div class="status">${stat}</div>`;
-  box.appendChild(d);
+/* ---------- Database lokal (mode demo) ---------- */
+function dbLokal() {
+  try { return JSON.parse(localStorage.getItem(LS_LOCAL)) || null; } catch { return null; }
+}
+function simpanLokal(db) { localStorage.setItem(LS_LOCAL, JSON.stringify(db)); }
+function buatDbLokal() {
+  const db = {
+    users: [
+      { id: "demo-a", username: "teman_a", display_name: "Teman A", pin: "91F28D44", passHash: "", demo: true, status_text: "Lagi santai" },
+      { id: "demo-b", username: "teman_b", display_name: "Teman B", pin: "C7710FA3", passHash: "", demo: true, status_text: "Sibuk kerja" },
+      { id: "demo-c", username: "teman_c", display_name: "Teman C", pin: "22BB5E77", passHash: "", demo: true, status_text: "" },
+    ],
+    contacts: [], messages: [], groups: [], members: [],
+  };
+  simpanLokal(db); return db;
+}
+async function hashPass(p) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("posel:" + p));
+  return [...new Uint8Array(buf)].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+/* ---------- Inisialisasi koneksi ---------- */
+async function initSupabase() {
+  const key = (localStorage.getItem(LS_KEY) || "").trim();
+  if (!key) { mode = "none"; setBadge(); return false; }
+  if (!createClient) {
+    mode = "none"; setBadge();
+    $("authPesan").textContent = "Pustaka Supabase (CDN) tidak bisa dimuat. Periksa internet, atau pakai Mode Lokal.";
+    return false;
+  }
+  try {
+    sb = createClient(SUPABASE_URL, key);
+    const { error } = await sb.from("profiles").select("id").limit(1);
+    if (error) throw error;
+    mode = "cloud"; setBadge(); return true;
+  } catch (e) {
+    mode = "none"; setBadge();
+    $("authPesan").textContent = "Supabase tidak bisa dijangkau (" + (e.message || e) + "). Periksa anon key, atau proyek Supabase mungkin sedang paused — aktifkan di dashboard Supabase.";
+    return false;
+  }
+}
+async function mulaiModeLokal() {
+  if (!dbLokal()) buatDbLokal();
+  mode = "local"; setBadge();
+  $("authPesan").textContent = "Mode Lokal aktif (demo). Akun dan pesan hanya tersimpan di HP ini, tidak sinkron ke HP lain.";
+}
+
+/* ---------- Auth ---------- */
+function bacaForm() {
+  const username = $("inUser").value.trim().toLowerCase();
+  const nama = $("inNama").value.trim();
+  const pass = $("inPass").value;
+  if (!/^[a-z0-9._]{3,20}$/.test(username)) { $("authPesan").textContent = "Username 3–20 karakter: huruf kecil, angka, titik, underscore."; return null; }
+  if (pass.length < 4) { $("authPesan").textContent = "Password minimal 4 karakter."; return null; }
+  return { username, nama: nama || username, pass };
+}
+async function daftar() {
+  const f = bacaForm(); if (!f) return;
+  if (mode === "local") return daftarLokal(f);
+  if (mode !== "cloud") { $("authPesan").textContent = "Isi anon key Supabase dulu di Pengaturan, atau pakai Mode Lokal."; return; }
+  try {
+    const email = f.username + "@pos-el.local";
+    const { data, error } = await sb.auth.signUp({ email, password: f.pass });
+    if (error) throw error;
+    let user = data.user;
+    if (!data.session) {
+      const s2 = await sb.auth.signInWithPassword({ email, password: f.pass });
+      if (s2.error) throw new Error("Akun dibuat tapi email belum dikonfirmasi. Matikan 'Confirm email' di Supabase → Authentication → Settings, lalu coba masuk.");
+      user = s2.data.user;
+    }
+    let pin = acakPin();
+    for (let i = 0; i < 5; i++) {
+      const cek = await sb.from("profiles").select("id").eq("pin", pin).limit(1);
+      if (!cek.data || cek.data.length === 0) break;
+      pin = acakPin();
+    }
+    const { error: e2 } = await sb.from("profiles").insert({ id: user.id, username: f.username, display_name: f.nama, pin });
+    if (e2) throw e2;
+    me = { id: user.id, username: f.username, display_name: f.nama, pin };
+    masukAplikasi();
+  } catch (e) { $("authPesan").textContent = "Gagal daftar: " + (e.message || e); }
+}
+async function masuk() {
+  const f = bacaForm(); if (!f) return;
+  if (mode === "local") return masukLokal(f);
+  if (mode !== "cloud") { $("authPesan").textContent = "Isi anon key Supabase dulu di Pengaturan, atau pakai Mode Lokal."; return; }
+  try {
+    const email = f.username + "@pos-el.local";
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: f.pass });
+    if (error) throw error;
+    const { data: prof } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
+    if (!prof) throw new Error("Profil tidak ditemukan. Daftar dulu.");
+    me = { id: prof.id, username: prof.username, display_name: prof.display_name, pin: prof.pin };
+    masukAplikasi();
+  } catch (e) { $("authPesan").textContent = "Gagal masuk: " + (e.message || e); }
+}
+async function daftarLokal(f) {
+  const db = dbLokal() || buatDbLokal();
+  if (db.users.some((u) => u.username === f.username)) { $("authPesan").textContent = "Username sudah dipakai di HP ini."; return; }
+  const pin = acakPin();
+  const u = { id: uid(), username: f.username, display_name: f.nama, pin, passHash: await hashPass(f.pass), status_text: "" };
+  db.users.push(u);
+  db.contacts.push({ owner: u.id, peer: "demo-a", status: "accepted" }, { owner: u.id, peer: "demo-b", status: "accepted" }, { owner: u.id, peer: "demo-c", status: "accepted" });
+  simpanLokal(db);
+  me = { id: u.id, username: u.username, display_name: u.display_name, pin: u.pin };
+  masukAplikasi();
+}
+async function masukLokal(f) {
+  const db = dbLokal() || buatDbLokal();
+  const u = db.users.find((x) => x.username === f.username);
+  if (!u || u.demo) { $("authPesan").textContent = "Akun tidak ditemukan di HP ini. Daftar dulu."; return; }
+  if (u.passHash !== await hashPass(f.pass)) { $("authPesan").textContent = "Password salah."; return; }
+  me = { id: u.id, username: u.username, display_name: u.display_name, pin: u.pin };
+  masukAplikasi();
+}
+async function keluarAkun() {
+  try { if (mode === "cloud" && sb) await sb.auth.signOut(); } catch {}
+  me = null; chatAktif = null; clearInterval(timerPoll);
+  $("mainPage").style.display = "none"; $("chatPage").style.display = "none";
+  $("authPage").style.display = "block";
+  $("authPesan").textContent = "";
+}
+
+/* ---------- Masuk aplikasi ---------- */
+async function masukAplikasi() {
+  $("authPage").style.display = "none";
+  $("mainPage").style.display = "block";
+  $("setNama").textContent = me.display_name;
+  $("setUser").textContent = me.username;
+  $("setPin").textContent = me.pin;
+  $("setMode").textContent = mode === "cloud" ? "Cloud Supabase (sinkron antar HP)" : "Lokal (demo, hanya HP ini)";
+  $("ckGetarPing").checked = localStorage.getItem(LS_PING) !== "0";
+  setBadge();
+  await muatSemua();
+  if (mode === "cloud") langgananRealtime();
+  clearInterval(timerPoll);
+  timerPoll = setInterval(async () => { if (me) await muatSemua(true); }, 5000);
+}
+async function muatSemua() {
+  try {
+    if (mode === "cloud") {
+      const { data: prof } = await sb.from("profiles").select("id,username,display_name,pin,status_text,last_seen").eq("id", me.id).single();
+      if (prof) { me.display_name = prof.display_name; me.pin = prof.pin; }
+      await sb.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", me.id);
+      const { data: c } = await sb.from("contacts").select("*, requester:requester_id(id,username,display_name,pin,status_text,last_seen), addressee:addressee_id(id,username,display_name,pin,status_text,last_seen)").or(`requester_id.eq.${me.id},addressee_id.eq.${me.id}`);
+      kontakSaya = []; undangan = [];
+      (c || []).forEach((row) => {
+        if (row.status === "pending" && row.addressee_id === me.id) undangan.push({ id: row.id, dari: row.requester });
+        else if (row.status === "accepted") {
+          const lain = row.requester_id === me.id ? row.addressee : row.requester;
+          if (lain) kontakSaya.push({ ...lain, online: lain.last_seen && (Date.now() - new Date(lain.last_seen).getTime() < 120000) });
+        }
+      });
+      const { data: g } = await sb.from("group_members").select("group_id, groups(id,name)").eq("user_id", me.id);
+      grupSaya = (g || []).map((x) => x.groups).filter(Boolean);
+    } else {
+      const db = dbLokal();
+      kontakSaya = db.contacts.filter((x) => x.owner === me.id && x.status === "accepted")
+        .map((x) => db.users.find((u) => u.id === x.peer)).filter(Boolean)
+        .map((u) => ({ ...u, online: !!u.demo }));
+      undangan = db.contacts.filter((x) => x.peer === me.id && x.status === "pending")
+        .map((x) => ({ id: x.owner + "|" + x.peer, dari: db.users.find((u) => u.id === x.owner) })).filter((x) => x.dari);
+      grupSaya = db.members.filter((x) => x.user_id === me.id).map((x) => db.groups.find((g) => g.id === x.group_id)).filter(Boolean);
+    }
+  } catch (e) { console.warn("muatSemua gagal", e); }
+  renderKontak(); renderChat(); renderKabar();
+}
+function pindahTab(id) {
+  ["tabChat", "tabKontak", "tabKabar", "tabSetting"].forEach((t) => { $(t).style.display = t === id ? "block" : "none"; });
+  document.querySelectorAll(".tab-btn").forEach((el) => el.classList.toggle("aktif", el.dataset.tab === id));
+}
+
+/* ---------- Kontak & undangan ---------- */
+async function tambahTeman() {
+  const pin = $("inPinTeman").value.trim().toUpperCase();
+  const out = $("pesanKontak");
+  if (!/^[0-9A-F]{8}$/.test(pin)) { out.textContent = "PIN harus 8 karakter (huruf/angka)."; return; }
+  if (pin === me.pin) { out.textContent = "Itu PIN kamu sendiri."; return; }
+  try {
+    if (mode === "cloud") {
+      const { data: t } = await sb.from("profiles").select("id,display_name").eq("pin", pin).single();
+      if (!t) { out.textContent = "PIN tidak ditemukan."; return; }
+      const { error } = await sb.from("contacts").insert({ requester_id: me.id, addressee_id: t.id, status: "pending" });
+      if (error) throw error;
+      out.textContent = "Undangan terkirim ke " + t.display_name + ". Menunggu diterima.";
+    } else {
+      const db = dbLokal();
+      const t = db.users.find((u) => u.pin === pin);
+      if (!t) { out.textContent = "PIN tidak ditemukan di HP ini."; return; }
+      if (db.contacts.some((x) => x.owner === me.id && x.peer === t.id)) { out.textContent = "Sudah jadi kontak / sudah diundang."; return; }
+      db.contacts.push({ owner: me.id, peer: t.id, status: t.demo ? "accepted" : "pending" });
+      if (!t.demo) db.contacts.push({ owner: t.id, peer: me.id, status: "pending" });
+      simpanLokal(db);
+      out.textContent = t.demo ? "Teman demo ditambahkan." : "Undangan terkirim (akun lokal di HP ini).";
+    }
+    $("inPinTeman").value = "";
+    await muatSemua();
+  } catch (e) { out.textContent = "Gagal: " + (e.message || e); }
+}
+async function jawabUndangan(id, terima) {
+  try {
+    if (mode === "cloud") {
+      if (terima) await sb.from("contacts").update({ status: "accepted" }).eq("id", id);
+      else await sb.from("contacts").delete().eq("id", id);
+    } else {
+      const db = dbLokal();
+      const [o, p] = String(id).split("|");
+      db.contacts = db.contacts.filter((x) => !((x.owner === o && x.peer === p) || (x.owner === p && x.peer === o)));
+      if (terima) { db.contacts.push({ owner: o, peer: p, status: "accepted" }, { owner: p, peer: o, status: "accepted" }); }
+      simpanLokal(db);
+    }
+    await muatSemua();
+  } catch (e) { alert("Gagal: " + (e.message || e)); }
+}
+function itemKontak(k, klik) {
+  return `<div class="contact-item" onclick="${klik}">
+    <div class="avatar">${esc(k.display_name.slice(-1).toUpperCase())}</div>
+    <div class="contact-info"><h3>${esc(k.display_name)} <span style="color:#0f0;font-size:12px">${k.online ? "●" : ""}</span></h3>
+    <p>${esc(k.pin)}${k.status_text ? " • " + esc(k.status_text) : ""}</p></div></div>`;
+}
+function renderKontak() {
+  $("daftarUndangan").innerHTML = undangan.length ? undangan.map((u) => `
+    <div class="contact-item" style="cursor:default">
+      <div class="avatar">${esc(u.dari.display_name.slice(-1).toUpperCase())}</div>
+      <div class="contact-info"><h3>${esc(u.dari.display_name)}</h3><p>${esc(u.dari.pin)} • Minta jadi teman</p></div>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button onclick="jawabUndangan('${u.id}',true)" class="btn send" style="height:32px;font-size:12px">Terima</button>
+        <button onclick="jawabUndangan('${u.id}',false)" class="btn ping" style="height:32px;font-size:12px">Tolak</button>
+      </div>
+    </div>`).join("") : '<div class="kosong">Tidak ada undangan.</div>';
+  $("daftarKontak").innerHTML = kontakSaya.length
+    ? kontakSaya.map((k) => itemKontak(k, `openChat('dm','${k.id}','${esc(k.display_name)}','${esc(k.pin)}')`)).join("")
+    : '<div class="kosong">Belum ada kontak. Tambah teman pakai PIN di atas.</div>';
+}
+function renderChat() {
+  let html = "";
+  kontakSaya.forEach((k) => { html += itemKontak(k, `openChat('dm','${k.id}','${esc(k.display_name)}','${esc(k.pin)}')`); });
+  grupSaya.forEach((g) => {
+    html += `<div class="contact-item" onclick="openChat('group','${g.id}','👥 ${esc(g.name)}','GRUP')">
+      <div class="avatar">👥</div>
+      <div class="contact-info"><h3>👥 ${esc(g.name)}</h3><p>Grup • klik untuk chat</p></div></div>`;
+  });
+  $("daftarChat").innerHTML = html || '<div class="kosong">Belum ada chat. Tambah teman pakai PIN di tab Kontak.</div>';
+}
+function renderKabar() {
+  const semua = [{ display_name: me.display_name + " (saya)", status_text: $("inStatus").value || "" }, ...kontakSaya];
+  $("daftarKabar").innerHTML = semua.filter((x) => x.status_text).map((x) => `
+    <div class="contact-item" style="cursor:default"><div class="avatar">${esc(x.display_name.slice(-1).toUpperCase())}</div>
+    <div class="contact-info"><h3>${esc(x.display_name)}</h3><p>${esc(x.status_text)}</p></div></div>`).join("")
+    || '<div class="kosong">Belum ada status. Tulis statusmu di atas.</div>';
+}
+async function simpanStatus() {
+  const t = $("inStatus").value.trim();
+  try {
+    if (mode === "cloud") await sb.from("profiles").update({ status_text: t }).eq("id", me.id);
+    else { const db = dbLokal(); const u = db.users.find((x) => x.id === me.id); if (u) { u.status_text = t; simpanLokal(db); } }
+    renderKabar();
+  } catch (e) { alert("Gagal simpan status: " + (e.message || e)); }
+}
+
+/* ---------- Chat ---------- */
+function openChat(kind, id, nama, pin) {
+  chatAktif = { kind, id, nama, pin: pin || "", peerId: kind === "dm" ? id : null };
+  $("chatName").textContent = nama;
+  $("chatPin").textContent = pin || "";
+  $("chatAvatar").textContent = nama.slice(-1).toUpperCase();
+  $("mainPage").style.display = "none";
+  $("chatPage").style.display = "flex";
+  $("chatBox").innerHTML = "";
+  elPesan = {};
+  muatPesan();
+}
+function closeChat() {
+  chatAktif = null;
+  $("chatPage").style.display = "none";
+  $("mainPage").style.display = "block";
+  muatSemua();
+}
+async function ambilPesan() {
+  if (mode === "cloud") {
+    let q = sb.from("messages").select("*").order("created_at", { ascending: true }).limit(100);
+    if (chatAktif.kind === "dm") q = q.or(`and(sender_id.eq.${me.id},recipient_id.eq.${chatAktif.peerId}),and(sender_id.eq.${chatAktif.peerId},recipient_id.eq.${me.id})`);
+    else q = q.eq("group_id", chatAktif.id);
+    const { data } = await q;
+    return data || [];
+  }
+  const db = dbLokal();
+  return db.messages.filter((m) => chatAktif.kind === "dm"
+    ? ((m.sender_id === me.id && m.recipient_id === chatAktif.peerId) || (m.sender_id === chatAktif.peerId && m.recipient_id === me.id))
+    : m.group_id === chatAktif.id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+}
+async function muatPesan() {
+  if (!chatAktif) return;
+  const list = await ambilPesan();
+  for (const m of list) {
+    if (!elPesan[m.id]) tambahPesanEl(m); else perbaruiTick(m);
+    if (m.recipient_id === me.id && m.status !== "read") await tandaiBaca(m);
+    else if (m.recipient_id === me.id && m.status === "sent") await tandaiTerkirim(m);
+  }
+  $("chatBox").scrollTop = $("chatBox").scrollHeight;
+}
+function tambahPesanEl(m) {
+  const box = $("chatBox");
+  const div = document.createElement("div");
+  const aku = m.sender_id === me.id;
+  div.className = "msg " + (aku ? "out" : "in") + (m.kind === "ping" ? " msg-ping" : "");
+  const tick = m.kind === "ping" ? "" : (m.status === "read" ? "R" : m.status === "delivered" ? "D" : "✓");
+  const cls = m.status === "read" ? "status-R" : m.status === "delivered" ? "status-D" : "status-S";
+  div.innerHTML = `<div class="msg-bubble">${esc(m.body)}</div><div class="status ${cls}">${tick} ${jam(m.created_at)}</div>`;
+  box.appendChild(div);
+  elPesan[m.id] = div;
   box.scrollTop = box.scrollHeight;
 }
+function perbaruiTick(m) {
+  const el = elPesan[m.id]; if (!el || m.kind === "ping") return;
+  const tick = m.status === "read" ? "R" : m.status === "delivered" ? "D" : "✓";
+  const cls = m.status === "read" ? "status-R" : m.status === "delivered" ? "status-D" : "status-S";
+  el.querySelector(".status").className = "status " + cls;
+  el.querySelector(".status").textContent = tick + " " + jam(m.created_at);
+}
+async function tandaiTerkirim(m) {
+  if (mode === "cloud") await sb.from("messages").update({ status: "delivered" }).eq("id", m.id);
+  else { const db = dbLokal(); const x = db.messages.find((y) => y.id === m.id); if (x) { x.status = "delivered"; simpanLokal(db); } }
+}
+async function tandaiBaca(m) {
+  if (mode === "cloud") await sb.from("messages").update({ status: "read" }).eq("id", m.id);
+  else { const db = dbLokal(); const x = db.messages.find((y) => y.id === m.id); if (x) { x.status = "read"; simpanLokal(db); } }
+}
+function sendMsg() {
+  const teks = $("msgInput").value.trim();
+  if (!teks || !chatAktif) return;
+  $("msgInput").value = "";
+  kirimKeBackend("text", teks);
+}
+function sendPing() {
+  if (!chatAktif) return;
+  kirimKeBackend("ping", "🔔 PING!");
+}
+async function kirimKeBackend(kind, body) {
+  const target = chatAktif.kind === "dm"
+    ? { recipient_id: chatAktif.peerId, group_id: null }
+    : { recipient_id: null, group_id: chatAktif.id };
+  try {
+    if (mode === "cloud") {
+      const { data, error } = await sb.from("messages").insert({ sender_id: me.id, recipient_id: target.recipient_id, group_id: target.group_id, kind, body, is_broadcast: false, status: "sent" }).select().single();
+      if (error) throw error;
+      if (chatAktif) tambahPesanEl(data);
+    } else {
+      const db = dbLokal();
+      const m = { id: uid(), sender_id: me.id, recipient_id: target.recipient_id, group_id: target.group_id, kind, body, is_broadcast: false, status: "sent", created_at: new Date().toISOString() };
+      db.messages.push(m);
+      if (chatAktif) tambahPesanEl(m);
+      const peer = db.users.find((u) => u.id === target.recipient_id);
+      if (peer && peer.demo) {
+        setTimeout(() => { const x = db.messages.find((y) => y.id === m.id); if (x) { x.status = "delivered"; simpanLokal(db); } perbaruiTick({ ...m, status: "delivered" }); }, 800);
+        setTimeout(() => { const x = db.messages.find((y) => y.id === m.id); if (x) { x.status = "read"; simpanLokal(db); } perbaruiTick({ ...m, status: "read" }); }, 1600);
+        if (kind === "ping") setTimeout(() => {
+          const r = { id: uid(), sender_id: peer.id, recipient_id: me.id, group_id: null, kind: "text", body: "PONG! 🏓", is_broadcast: false, status: "read", created_at: new Date().toISOString() };
+          db.messages.push(r); simpanLokal(db);
+          if (chatAktif) tambahPesanEl(r);
+        }, 1600);
+      }
+      simpanLokal(db);
+    }
+    if (chatAktif) { const w = $("chatBox"); w.scrollTop = w.scrollHeight; }
+  } catch (e) { alert("Gagal kirim: " + (e.message || e)); }
+}
+function buatGrupPrompt() {
+  const nama = prompt("Nama grup baru:");
+  if (!nama) return;
+  buatGrup(nama.trim());
+}
+async function buatGrup(nama) {
+  try {
+    if (mode === "cloud") {
+      const { data: g, error } = await sb.from("groups").insert({ name: nama, created_by: me.id }).select().single();
+      if (error) throw error;
+      await sb.from("group_members").insert([{ group_id: g.id, user_id: me.id }, ...kontakSaya.map((k) => ({ group_id: g.id, user_id: k.id }))]);
+    } else {
+      const db = dbLokal();
+      const g = { id: uid(), name: nama, created_by: me.id };
+      db.groups.push(g);
+      db.members.push({ group_id: g.id, user_id: me.id }, ...kontakSaya.map((k) => ({ group_id: g.id, user_id: k.id })));
+      simpanLokal(db);
+    }
+    await muatSemua();
+    alert("Grup '" + nama + "' dibuat dengan semua kontakmu.");
+  } catch (e) { alert("Gagal buat grup: " + (e.message || e)); }
+}
+async function broadcastPrompt() {
+  const teks = prompt("Pesan broadcast ke semua kontak:");
+  if (!teks) return;
+  if (!kontakSaya.length) { alert("Belum ada kontak."); return; }
+  try {
+    if (mode === "cloud") {
+      for (const k of kontakSaya) await sb.from("messages").insert({ sender_id: me.id, recipient_id: k.id, group_id: null, kind: "text", body: teks.trim(), is_broadcast: true, status: "sent" });
+    } else {
+      const db = dbLokal();
+      for (const k of kontakSaya) db.messages.push({ id: uid(), sender_id: me.id, recipient_id: k.id, group_id: null, kind: "text", body: teks.trim(), is_broadcast: true, status: "sent", created_at: new Date().toISOString() });
+      simpanLokal(db);
+    }
+    alert("Broadcast terkirim ke " + kontakSaya.length + " kontak.");
+  } catch (e) { alert("Gagal broadcast: " + (e.message || e)); }
+}
+function salinPin() { try { navigator.clipboard.writeText(me.pin); alert("PIN disalin: " + me.pin); } catch { prompt("Salin PIN:", me.pin); } }
+function tesPing() { tampilPing(me.display_name + " (tes)"); }
 
-function sendMsg(){
-  const input = document.getElementById("msgInput");
-  const teks = input.value.trim();
-  if(!teks) return;
-  addMsg(teks,"out","S");
-  input.value="";
-
-  setTimeout(()=>{
-    let last = document.querySelector(".msg.out:last-child .status");
-    if(last) last.textContent="D";
-  }, 800);
-  setTimeout(()=>{
-    let last = document.querySelector(".msg.out:last-child .status");
-    if(last) last.textContent="R";
-  }, 1600);
+/* ---------- Realtime (cloud) ---------- */
+function langgananRealtime() {
+  if (!sb) return;
+  sb.channel("posel-msg")
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, async (p) => {
+      const m = p.new;
+      const untukSaya = m.recipient_id === me.id || (m.group_id && grupSaya.some((g) => g.id === m.group_id));
+      if (!untukSaya || m.sender_id === me.id) return;
+      if (m.status === "sent") await tandaiTerkirim(m);
+      if (chatAktif && ((chatAktif.kind === "dm" && m.sender_id === chatAktif.peerId) || (chatAktif.kind === "group" && m.group_id === chatAktif.id))) {
+        tambahPesanEl(m);
+        await tandaiBaca(m);
+        if (m.kind === "ping") tampilPing(namaPengirim(m.sender_id));
+      } else if (m.kind === "ping") {
+        tampilPing(namaPengirim(m.sender_id));
+      }
+      await muatSemua();
+    })
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, (p) => {
+      if (p.new.sender_id === me.id) perbaruiTick(p.new);
+    })
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "contacts" }, () => muatSemua())
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "contacts" }, () => muatSemua())
+    .subscribe();
+}
+function namaPengirim(id) {
+  const k = kontakSaya.find((x) => x.id === id);
+  return k ? k.display_name : "Teman";
 }
 
-function sendPing(){
-  audioPing.currentTime=0;
-  audioPing.play();
-  addMsg("PING!","out","S");
-  setTimeout(()=>{
-    let last = document.querySelector(".msg.out:last-child .status");
-    if(last) last.textContent="D";
-  }, 800);
-  setTimeout(()=>{
-    let last = document.querySelector(".msg.out:last-child .status");
-    if(last) last.textContent="R";
-    addMsg("PONG! 🏓","in");
-  }, 1600);
-}
+/* ---------- Init ---------- */
+window.pindahTab = pindahTab; window.openChat = openChat; window.closeChat = closeChat;
+window.sendMsg = sendMsg; window.sendPing = sendPing; window.tambahTeman = tambahTeman;
+window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window.buatGrupPrompt = buatGrupPrompt;
+window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
+window.keluarAkun = keluarAkun;
+$("btnDaftar").onclick = daftar;
+$("btnMasuk").onclick = masuk;
+$("btnSimpanKey").onclick = async () => {
+  const k = $("inAnonKey").value.trim();
+  if (!k) { $("authPesan").textContent = "Tempel anon key dulu."; return; }
+  localStorage.setItem(LS_KEY, k);
+  $("authPesan").textContent = "Kunci disimpan. Menghubungkan…";
+  await initSupabase();
+  if (mode === "cloud") $("authPesan").textContent = "Terhubung ke Supabase. Silakan daftar / masuk.";
+};
+$("btnModeLokal").onclick = mulaiModeLokal;
+$("ckGetarPing").onchange = (e) => localStorage.setItem(LS_PING, e.target.checked ? "1" : "0");
+$("inPass").addEventListener("keydown", (e) => { if (e.key === "Enter") masuk(); });
+
+(async () => {
+  const ok = await initSupabase();
+  if (ok && sb) {
+    const { data } = await sb.auth.getSession();
+    if (data.session) {
+      const { data: prof } = await sb.from("profiles").select("*").eq("id", data.session.user.id).single();
+      if (prof) { me = { id: prof.id, username: prof.username, display_name: prof.display_name, pin: prof.pin }; masukAplikasi(); }
+    }
+  }
+})();
 </script>
 </body>
 </html>
