@@ -1017,8 +1017,30 @@ window.poselBack = function () {
   const tabChatTampil = $("tabChat") && $("tabChat").style.display !== "none";
   const diMain = document.getElementById("pageMain").classList.contains("active");
   if (diMain && !tabChatTampil) { pindahTab("tabChat"); return true; }
-  return false;
+  toastPosel("Tekan tombol Home untuk keluar");
+  return true;
 };
+function toastPosel(t) {
+  let el = document.getElementById("toastPosel");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "toastPosel";
+    el.style.cssText = "position:fixed;left:50%;bottom:86px;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;font-size:12.5px;padding:9px 14px;border-radius:20px;z-index:90;transition:opacity .25s;opacity:1;pointer-events:none";
+    document.body.appendChild(el);
+  }
+  el.textContent = t;
+  el.style.opacity = "1";
+  clearTimeout(window.__toastPosel);
+  window.__toastPosel = setTimeout(() => { el.style.opacity = "0"; }, 1600);
+}
+/* jaga tombol back browser/PWA: jangan keluar dari halaman */
+(function jagaBackBrowser() {
+  try { history.pushState({ posel: 1 }, ""); } catch (e) {}
+  window.addEventListener("popstate", function () {
+    try { if (window.poselBack) window.poselBack(); } catch (e) {}
+    try { history.pushState({ posel: 1 }, ""); } catch (e) {}
+  });
+})();
 function gantiHalaman(nama) {
   const peta = { welcome: "pageWelcome", login: "pageLogin", register: "pageRegister", main: "pageMain", chatRoom: "pageChatRoom" };
   document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
