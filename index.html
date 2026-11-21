@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pos-El - Pesan Jadul ala BBM</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@font-face {
+  font-family: 'BlackBerryFont';
+  src: local('Arial');
+}
+body {
+  font-family: Arial, sans-serif;
+  background: #222;
+}
+.bb-screen {
+  background: #000;
+  border: 12px solid #444;
+  border-radius: 16px;
+  max-width: 360px;
+  margin: 20px auto;
+  overflow: hidden;
+}
+.header-posel {
+  background: #115599;
+  color: white;
+  padding: 6px 10px;
+  display:flex;
+  justify-content: space-between;
+  font-size:14px;
+}
+.chat-item {
+  border-bottom: 1px solid #333;
+  padding:8px 10px;
+  cursor:pointer;
+}
+.chat-item:hover {
+  background:#224;
+}
+.pin-text {
+  color:#8cf;
+  font-size:12px;
+}
+.status-R {
+  color:#0f0;
+}
+.status-D {
+  color:#ff0;
+}
+.status-S {
+  color:#888;
+}
+.ping-btn {
+  background:#b22;
+}
+.ping-sound {
+  display:none;
+}
+.msg-box {
+  background:#111;
+  color:#eee;
+  padding:6px 8px;
+  margin:4px;
+  border-radius:4px;
+  max-width:80%;
+}
+.msg-me {
+  margin-left:auto;
+  background:#142;
+}
+.msg-other {
+  margin-right:auto;
+  background:#223;
+}
+</style>
+</head>
+<body class="p-2">
+<div class="bb-screen">
+  <div class="header-posel">
+    <span>POS-EL</span>
+    <span id="myPin">PIN: 7A2B9C0E</span>
+  </div>
+
+  <!-- Menu Kontak -->
+  <div id="kontakList" class="text-white text-sm">
+    <div class="chat-item" onclick="bukaChat('Teman A','91F28D44')">
+      <div>Teman A <span class="pin-text">91F28D44</span></div>
+      <div class="text-xs text-gray-400">Klik untuk chat / ping</div>
+    </div>
+    <div class="chat-item" onclick="bukaChat('Teman B','C7710FA3')">
+      <div>Teman B <span class="pin-text">C7710FA3</span></div>
+      <div class="text-xs text-gray-400">Klik untuk chat / ping</div>
+    </div>
+    <div class="chat-item" onclick="bukaChat('Teman C','22BB5E77')">
+      <div>Teman C <span class="pin-text">22BB5E77</span></div>
+      <div class="text-xs text-gray-400">Klik untuk chat / ping</div>
+    </div>
+  </div>
+
+  <!-- Area Chat (tersembunyi awal) -->
+  <div id="areaChat" class="hidden">
+    <div class="bg-slate-800 px-2 py-1 flex justify-between items-center">
+      <span id="namaKontak">Teman</span>
+      <button onclick="kembaliKeKontak()" class="text-xs bg-gray-600 px-2 py-1">← Kembali</button>
+    </div>
+    <div id="ruangPesan" class="h-72 overflow-y-auto p-2 flex flex-col"></div>
+    <div class="p-2 flex gap-1">
+      <input id="inputPesan" class="flex-1 bg-black text-white px-2 py-1 text-sm rounded" placeholder="Ketik pesan...">
+      <button onclick="kirimPesan()" class="bg-blue-600 text-white px-2 py-1 text-sm">Kirim</button>
+      <button onclick="kirimPing()" class="ping-btn text-white px-2 py-1 text-sm">PING!</button>
+    </div>
+  </div>
+</div>
+
+<audio id="suaraPing" class="ping-sound">
+  <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQAtk8N2QDp+ffx96r6vT3d29vbP//8HAA==" type="audio/wav">
+
+
+<script>
+let pinAktif = "";
+let namaAktif = "";
+let statusPesan = {};
+
+// Buka chat kontak
+function bukaChat(nama, pin){
+  namaAktif = nama;
+  pinAktif = pin;
+  document.getElementById("kontakList").classList.add("hidden");
+  document.getElementById("areaChat").classList.remove("hidden");
+  document.getElementById("namaKontak").textContent = nama + " ["+pin+"]";
+}
+function kembaliKeKontak(){
+  document.getElementById("areaChat").classList.add("hidden");
+  document.getElementById("kontakList").classList.remove("hidden");
+}
+
+// Kirim pesan biasa
+function kirimPesan(){
+  const teks = document.getElementById("inputPesan").value.trim();
+  if(!teks) return;
+  tambahPesan("aku", teks, "S");
+  document.getElementById("inputPesan").value = "";
+
+  // Simulasi D (terkirim) lalu R (dibaca)
+  setTimeout(()=> ubahStatus(teks,"D"), 800);
+  setTimeout(()=> ubahStatus(teks,"R"), 2200);
+}
+
+// FITUR PING ANDALAN!
+function kirimPing(){
+  const pingTeks = "🔔 PING!";
+  tambahPesan("aku", pingTeks, "S");
+  putarPing();
+  setTimeout(()=> ubahStatus(pingTeks,"D"),600);
+  setTimeout(()=> ubahStatus(pingTeks,"R"),1800);
+
+  // Simulasi balasan ping dari teman
+  setTimeout(()=>{
+    tambahPesan("lain", "Ping diterima! 😮‍💨", "R");
+  },3000)
+}
+
+function tambahPesan(pengirim, isi, st){
+  const wadah = document.getElementById("ruangPesan");
+  const div = document.createElement("div");
+  div.className = "msg-box " + (pengirim==="aku" ? "msg-me" : "msg-other");
+  div.dataset.isi = isi;
+  div.innerHTML = isi + ` <span class="text-xs status-${st}">${st}</span>`;
+  wadah.appendChild(div);
+  wadah.scrollTop = wadah.scrollHeight;
+  statusPesan[isi] = {el:div, status:st};
+}
+
+function ubahStatus(isi, stBaru){
+  if(!statusPesan[isi]) return;
+  const el = statusPesan[isi].el;
+  el.innerHTML = isi + ` <span class="text-xs status-${stBaru}">${stBaru}</span>`;
+  statusPesan[isi].status = stBaru;
+}
+
+function putarPing(){
+  const audio = document.getElementById("suaraPing");
+  audio.currentTime=0;
+  audio.play().catch(e=>{});
+}
+</script>
+</body>
+  </html>
+  
