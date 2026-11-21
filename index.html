@@ -12,7 +12,11 @@ body { background: #ececec; color: #1a1a1a; }
 .app { max-width: 430px; margin: 0 auto; min-height: 100vh; background: #ececec; overflow: hidden; }
 .page { display: none; }
 .page.active { display: block; }
-#pageChatRoom.active { display: flex; flex-direction: column; height: 100vh; }
+#pageChatRoom.active { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+body.chat-aktif { overflow: hidden; height: 100%; }
+#pageChatRoom .header-bbm { flex: 0 0 auto; }
+#pageChatRoom .chat-page-wrap { min-height: 0; -webkit-overflow-scrolling: touch; }
+#pageChatRoom .chat-input-bar { flex: 0 0 auto; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
 
 /* ========== HALAMAN AUTH (gaya BBM) ========== */
 .page-auth { background: #f2f2f2; color: #1a1a1a; min-height: 100vh; padding: 0 0 30px; text-align: center; }
@@ -705,8 +709,34 @@ function gantiHalaman(nama) {
   document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
   const el = $(peta[nama] || "pageWelcome");
   if (el) el.classList.add("active");
+  document.body.classList.toggle("chat-aktif", nama === "chatRoom");
   window.scrollTo(0, 0);
+  if (window.PosElFitLayar) { window.PosElFitLayar(); setTimeout(window.PosElFitLayar, 150); setTimeout(window.PosElFitLayar, 500); }
 }
+/* ---------- v4.1.2: layar chat pas di HP apa pun (keyboard & address bar) ---------- */
+(function pasangFitLayar() {
+  const chat = document.getElementById("pageChatRoom");
+  function fit() {
+    if (!chat) return;
+    if (!chat.classList.contains("active")) { chat.style.height = ""; return; }
+    const vv = window.visualViewport;
+    const h = vv ? vv.height : window.innerHeight;
+    chat.style.height = Math.max(300, Math.round(h)) + "px";
+    const box = document.getElementById("chatBox");
+    if (box) setTimeout(() => { box.scrollTop = box.scrollHeight; }, 60);
+  }
+  window.PosElFitLayar = fit;
+  window.addEventListener("resize", fit);
+  window.addEventListener("orientationchange", () => setTimeout(fit, 300));
+  document.addEventListener("focusin", (e) => {
+    if (e.target && e.target.id === "msgInput") { setTimeout(fit, 260); setTimeout(fit, 600); }
+  });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", fit);
+    window.visualViewport.addEventListener("scroll", fit);
+  }
+  fit();
+})();
 /* ---------- Kode pemulihan (v4.1) ---------- */
 function normKode(k) { return String(k || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
 async function sha256Hex(t) {
