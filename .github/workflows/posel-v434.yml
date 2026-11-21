@@ -1,0 +1,27 @@
+name: posel-v434
+on:
+  push:
+    paths: ['.github/posel_v434.txt']
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch new html
+        run: |
+          curl -fsSL "https://aka.doubaocdn.com/s/WFFUgW4Xs7" -o new.html
+          md5sum new.html
+          grep -q 'jagaBackBrowser' new.html
+          grep -q 'toastPosel' new.html
+          cp new.html index.html
+      - name: commit and cleanup
+        run: |
+          git config user.name posel-bot
+          git config user.email bot@posel.local
+          git add index.html
+          git commit -m "v4.3.4: tombol back tidak keluar aplikasi"
+          git rm -q .github/workflows/posel-v434.yml .github/posel_v434.txt || true
+          git commit -m "chore: cleanup v4.3.4 workflow"
+          git push
