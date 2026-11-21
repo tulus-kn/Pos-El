@@ -308,6 +308,9 @@ body.chat-aktif { overflow: hidden; height: 100%; }
       <label style="font-size:13px;display:flex;gap:8px;align-items:center;margin-top:10px">
         <input type="checkbox" id="ckGetarPing" checked> Getar saat menerima Ping
       </label>
+      <label style="font-size:13px;display:flex;gap:8px;align-items:center;margin-top:8px">
+        <input type="checkbox" id="ckPingLatar"> Ping tetap masuk walau aplikasi ditutup (APK)
+      </label>
       <button class="btn-bbm" style="margin-top:10px" onclick="tesGetar()">Tes Getar</button>
       <button class="btn-bbm" onclick="mintaIzinNotif()">Izinkan akses notifikasi (lagu dari app lain)</button>
       <button class="btn-bbm" onclick="pasangApp()">Pasang Pos-El di layar utama</button>
@@ -761,6 +764,7 @@ async function masukLokal(f) {
   masukAplikasi();
 }
 async function keluarAkun() {
+  try { if (window.PosElNative && window.PosElNative.stopPingLatar) window.PosElNative.stopPingLatar(); } catch (e) {}
   try { if (mode === "cloud" && sb) await sb.auth.signOut(); } catch {}
   me = null; chatAktif = null; clearInterval(timerPoll);
   gantiHalaman("welcome");
@@ -778,6 +782,7 @@ async function masukAplikasi() {
   setBadge();
   await muatSemua();
   if (mode === "cloud") langgananRealtime();
+  if (localStorage.getItem(LS_PING_LATAR) === "1") aturPingLatar(true, true);
   clearInterval(timerPoll);
   timerPoll = setInterval(async () => { if (me) await muatSemua(true); }, 5000);
 }
@@ -1072,6 +1077,33 @@ async function simpanStatus() {
     else { const db = dbLokal(); const u = db.users.find((x) => x.id === me.id); if (u) { u.status_text = t; simpanLokal(db); } }
     renderKabar();
   } catch (e) { alert("Gagal simpan status: " + (e.message || e)); }
+}
+
+/* ---------- Ping di latar (APK) ---------- */
+const LS_PING_LATAR = "posel.pinglatar";
+async function aturPingLatar(aktif, diam) {
+  localStorage.setItem(LS_PING_LATAR, aktif ? "1" : "0");
+  const punya = window.PosElNative && typeof window.PosElNative.mulaiPingLatar === "function";
+  if (!punya) {
+    if (aktif && !diam) alert("Fitur ini hanya ada di APK Pos-El 1.4. Di browser/PWA Android tidak mengizinkannya.");
+    return;
+  }
+  if (!aktif) {
+    try { window.PosElNative.stopPingLatar(); } catch (e) {}
+    if (!diam) alert("Ping latar dimatikan.");
+    return;
+  }
+  try { if (window.PosElNative.mintaIzinNotifAndroid) window.PosElNative.mintaIzinNotifAndroid(); } catch (e) {}
+  if (mode !== "cloud" || !sb) { if (!diam) alert("Butuh mode Cloud (login Supabase) dulu."); return; }
+  try {
+    const ses = await sb.auth.getSession();
+    const ss = ses.data && ses.data.session;
+    if (!ss) { if (!diam) alert("Sesi login tidak ditemukan. Masuk lagi lalu coba."); return; }
+    window.PosElNative.mulaiPingLatar(SUPABASE_URL, getAnonKey(), ss.access_token, ss.refresh_token || "", me.id);
+    if (!diam) alert("Aktif. PING akan muncul sebagai notifikasi walau aplikasi ditutup.\nAkan ada notifikasi kecil \"Pos-El aktif\" — itu tanda layanan berjalan.");
+  } catch (e) {
+    if (!diam) alert("Gagal aktifkan ping latar: " + (e.message || e));
+  }
 }
 
 /* ---------- Profil: nama + foto (v4.3) ---------- */
@@ -1538,6 +1570,8 @@ $("btnSimpanKey").onclick = async () => {
 };
 $("btnModeLokal").onclick = mulaiModeLokal;
 $("ckGetarPing").onchange = (e) => localStorage.setItem(LS_PING, e.target.checked ? "1" : "0");
+$("ckPingLatar").checked = localStorage.getItem(LS_PING_LATAR) === "1";
+$("ckPingLatar").onchange = (e) => aturPingLatar(e.target.checked);
 $("pfFoto").addEventListener("change", async (e) => {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
