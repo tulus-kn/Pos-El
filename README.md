@@ -7,6 +7,17 @@ bunyi + banner merah), grup, broadcast, dan status Kabar.
 
 Live: https://tulus-kn.github.io/Pos-El/
 
+## Perubahan v3.3 (2026-11-21) — Tema BBM Jadul (hijau gelap)
+- Tampilan dirombak jadi tema BBM Jadul kiriman user: body gelap `#222222`,
+  container `#2c2c2c` (lebar maks 430px), header hijau `#009929`, avatar hijau,
+  bubble pesan kirim hijau `#009929` (radius 10px 10px 2px 10px), bubble pesan
+  terima abu-abu gelap `#444444`, input dan tombol hijau `#009929`, tombol
+  sekunder abu-abu `#555555`, tab aktif hijau. Tombol PING! tetap merah
+  mencolok. Titik online `.ping-bbm` 11px hijau beranimasi `pingGetar`
+  (scale 0.75 → 1.7, 1.2 detik), titik offline `.ping-off` abu-abu `#777777`.
+  Logika tidak berubah: auth, PIN, chat, Ping, grup, broadcast, Kabar,
+  online indicator, dan tabel `posel_*` tetap sama seperti v3.1/v3.2.
+
 ## Perubahan v3.2 (2026-11-21) — UI ala BBM klasik + kunci bisa ditanam
 - Tampilan dirombak jadi gaya BlackBerry Messenger klasik: header hitam,
   latar putih/abu-abu muda, avatar bulat, bubble pesan masuk putih/abu-abu,
