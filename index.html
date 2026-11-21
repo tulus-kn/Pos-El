@@ -3,188 +3,146 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pos-El - Pesan Jadul ala BBM</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<title>POS-EL</title>
 <style>
-@font-face {
-  font-family: 'BlackBerryFont';
-  src: local('Arial');
-}
-body {
-  font-family: Arial, sans-serif;
-  background: #222;
-}
-.bb-screen {
-  background: #000;
-  border: 12px solid #444;
-  border-radius: 16px;
-  max-width: 360px;
-  margin: 20px auto;
-  overflow: hidden;
-}
-.header-posel {
-  background: #115599;
-  color: white;
-  padding: 6px 10px;
-  display:flex;
-  justify-content: space-between;
-  font-size:14px;
-}
-.chat-item {
-  border-bottom: 1px solid #333;
-  padding:8px 10px;
-  cursor:pointer;
-}
-.chat-item:hover {
-  background:#224;
-}
-.pin-text {
-  color:#8cf;
-  font-size:12px;
-}
-.status-R {
-  color:#0f0;
-}
-.status-D {
-  color:#ff0;
-}
-.status-S {
-  color:#888;
-}
-.ping-btn {
-  background:#b22;
-}
-.ping-sound {
-  display:none;
-}
-.msg-box {
-  background:#111;
-  color:#eee;
-  padding:6px 8px;
-  margin:4px;
-  border-radius:4px;
-  max-width:80%;
-}
-.msg-me {
-  margin-left:auto;
-  background:#142;
-}
-.msg-other {
-  margin-right:auto;
-  background:#223;
-}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial, sans-serif}
+body{background:#222;background-image:radial(#333 1px,transparent 1px);background-size:20px 20px;padding:1rem}
+.container{max-width:420px;margin:0 auto;background:#000;border-radius:20px;overflow:hidden;border:3px solid #2563eb;box-shadow:0 0 25px #2563eb44}
+.header{background:linear-gradient(90deg,#1d4ed8,#3b82f6);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;font-weight:bold;font-size:19px}
+.header-pin{font-size:16px;opacity:0.9}
+
+.contact-list{background:#000}
+.contact-item{display:flex;gap:12px;padding:12px 16px;border-bottom:#222 solid 1px;align-items:center;cursor:pointer;transition:0.2s}
+.contact-item:hover{background:#111}
+.avatar{width:46px;height:46px;border-radius:50%;background:#3366cc;color:#fff;display:grid;place-items:center;font-weight:bold;font-size:18px}
+.contact-info h3{color:#fff;font-size:16px}
+.contact-info p{color:#888;font-size:13px;margin-top:2px}
+
+.chat-screen{display:none;height:580px;background:#111;flex-direction:column}
+.chat-topbar{background:#1d4ed8;color:#fff;padding:12px 16px;display:flex;gap:10px;align-items:center}
+.back-btn{background:#fff2;border:0;color:#fff;padding:4px 9px;border-radius:8px;cursor:pointer}
+.chat-area{flex:1;padding:14px;overflow-y:auto}
+.msg{margin:8px 0;max-width:75%}
+.msg.out{margin-left:auto}
+.msg-bubble{padding:9px 12px;border-radius:12px;font-size:14px}
+.msg.in .msg-bubble{background:#333;color:#fff;border-bottom-left-radius:3px}
+.msg.out .msg-bubble{background:#2563eb;color:#fff;border-bottom-right-radius:3px}
+.status{font-size:11px;color:#777;text-align:right;margin-top:2px}
+
+.chat-input-area{display:flex;padding:10px;background:#000;gap:8px}
+#msgInput{flex:1;padding:10px;border-radius:12px;border:0;outline:none}
+.btn{border:0;padding:0 14px;border-radius:12px;font-weight:bold;cursor:pointer;height:40px}
+.send{background:#2563eb;color:#fff}
+.ping{background:#dc2626;color:#fff}
 </style>
 </head>
-<body class="p-2">
-<div class="bb-screen">
-  <div class="header-posel">
+<body>
+<div class="container">
+  <div class="header">
     <span>POS-EL</span>
-    <span id="myPin">PIN: 7A2B9C0E</span>
+    <span class="header-pin">PIN: 7A2B9C0E</span>
   </div>
 
-  <!-- Menu Kontak -->
-  <div id="kontakList" class="text-white text-sm">
-    <div class="chat-item" onclick="bukaChat('Teman A','91F28D44')">
-      <div>Teman A <span class="pin-text">91F28D44</span></div>
-      <div class="text-xs text-gray-400">Klik untuk chat / ping</div>
+  <div id="contactPage" class="contact-list">
+    <div class="contact-item" onclick="openChat('Teman A','91F28D44')">
+      <div class="avatar">A</div>
+      <div class="contact-info">
+        <h3>Teman A</h3>
+        <p>91F28D44</p>
+      </div>
     </div>
-    <div class="chat-item" onclick="bukaChat('Teman B','C7710FA3')">
-      <div>Teman B <span class="pin-text">C7710FA3</span></div>
-      <div class="text-xs text-gray-400">Klik untuk chat / ping</div>
+    <div class="contact-item" onclick="openChat('Teman B','C7710FA3')">
+      <div class="avatar">B</div>
+      <div class="contact-info">
+        <h3>Teman B</h3>
+        <p>C7710FA3</p>
+      </div>
     </div>
-    <div class="chat-item" onclick="bukaChat('Teman C','22BB5E77')">
-      <div>Teman C <span class="pin-text">22BB5E77</span></div>
-      <div class="text-xs text-gray-400">Klik untuk chat / ping</div>
+    <div class="contact-item" onclick="openChat('Teman C','22BB5E77')">
+      <div class="avatar">C</div>
+      <div class="contact-info">
+        <h3>Teman C</h3>
+        <p>22BB5E77</p>
+      </div>
     </div>
   </div>
 
-  <!-- Area Chat (tersembunyi awal) -->
-  <div id="areaChat" class="hidden">
-    <div class="bg-slate-800 px-2 py-1 flex justify-between items-center">
-      <span id="namaKontak">Teman</span>
-      <button onclick="kembaliKeKontak()" class="text-xs bg-gray-600 px-2 py-1">← Kembali</button>
+  <div id="chatPage" class="chat-screen">
+    <div class="chat-topbar">
+      <button class="back-btn" onclick="closeChat()">←</button>
+      <div class="avatar" id="chatAvatar">A</div>
+      <div>
+        <div id="chatName">Teman A</div>
+        <div style="font-size:12px;opacity:0.8" id="chatPin">91F28D44</div>
+      </div>
     </div>
-    <div id="ruangPesan" class="h-72 overflow-y-auto p-2 flex flex-col"></div>
-    <div class="p-2 flex gap-1">
-      <input id="inputPesan" class="flex-1 bg-black text-white px-2 py-1 text-sm rounded" placeholder="Ketik pesan...">
-      <button onclick="kirimPesan()" class="bg-blue-600 text-white px-2 py-1 text-sm">Kirim</button>
-      <button onclick="kirimPing()" class="ping-btn text-white px-2 py-1 text-sm">PING!</button>
+    <div class="chat-area" id="chatBox"></div>
+    <div class="chat-input-area">
+      <input id="msgInput" placeholder="Ketik pesan..." onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="btn send" onclick="sendMsg()">Kirim</button>
+      <button class="btn ping" onclick="sendPing()">PING!</button>
     </div>
   </div>
 </div>
 
-<audio id="suaraPing" class="ping-sound">
-  <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQAtk8N2QDp+ffx96r6vT3d29vbP//8HAA==" type="audio/wav">
-
-
 <script>
-let pinAktif = "";
-let namaAktif = "";
-let statusPesan = {};
+const audioPing = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3");
+let currentName,currentPin;
 
-// Buka chat kontak
-function bukaChat(nama, pin){
-  namaAktif = nama;
-  pinAktif = pin;
-  document.getElementById("kontakList").classList.add("hidden");
-  document.getElementById("areaChat").classList.remove("hidden");
-  document.getElementById("namaKontak").textContent = nama + " ["+pin+"]";
-}
-function kembaliKeKontak(){
-  document.getElementById("areaChat").classList.add("hidden");
-  document.getElementById("kontakList").classList.remove("hidden");
+function openChat(n,p){
+  currentName=n;currentPin=p;
+  document.getElementById("chatName").textContent=n;
+  document.getElementById("chatPin").textContent=p;
+  document.getElementById("chatAvatar").textContent=n.slice(-1);
+  document.getElementById("contactPage").style.display="none";
+  document.getElementById("chatPage").style.display="flex";
 }
 
-// Kirim pesan biasa
-function kirimPesan(){
-  const teks = document.getElementById("inputPesan").value.trim();
+function closeChat(){
+  document.getElementById("contactPage").style.display="block";
+  document.getElementById("chatPage").style.display="none";
+}
+
+function addMsg(text,tipe,stat="S"){
+  const box=document.getElementById("chatBox");
+  const d=document.createElement("div");
+  d.className="msg "+tipe;
+  d.innerHTML=`<div class="msg-bubble">${text}</div><div class="status">${stat}</div>`;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendMsg(){
+  const input = document.getElementById("msgInput");
+  const teks = input.value.trim();
   if(!teks) return;
-  tambahPesan("aku", teks, "S");
-  document.getElementById("inputPesan").value = "";
+  addMsg(teks,"out","S");
+  input.value="";
 
-  // Simulasi D (terkirim) lalu R (dibaca)
-  setTimeout(()=> ubahStatus(teks,"D"), 800);
-  setTimeout(()=> ubahStatus(teks,"R"), 2200);
-}
-
-// FITUR PING ANDALAN!
-function kirimPing(){
-  const pingTeks = "🔔 PING!";
-  tambahPesan("aku", pingTeks, "S");
-  putarPing();
-  setTimeout(()=> ubahStatus(pingTeks,"D"),600);
-  setTimeout(()=> ubahStatus(pingTeks,"R"),1800);
-
-  // Simulasi balasan ping dari teman
   setTimeout(()=>{
-    tambahPesan("lain", "Ping diterima! 😮‍💨", "R");
-  },3000)
+    let last = document.querySelector(".msg.out:last-child .status");
+    if(last) last.textContent="D";
+  }, 800);
+  setTimeout(()=>{
+    let last = document.querySelector(".msg.out:last-child .status");
+    if(last) last.textContent="R";
+  }, 1600);
 }
 
-function tambahPesan(pengirim, isi, st){
-  const wadah = document.getElementById("ruangPesan");
-  const div = document.createElement("div");
-  div.className = "msg-box " + (pengirim==="aku" ? "msg-me" : "msg-other");
-  div.dataset.isi = isi;
-  div.innerHTML = isi + ` <span class="text-xs status-${st}">${st}</span>`;
-  wadah.appendChild(div);
-  wadah.scrollTop = wadah.scrollHeight;
-  statusPesan[isi] = {el:div, status:st};
-}
-
-function ubahStatus(isi, stBaru){
-  if(!statusPesan[isi]) return;
-  const el = statusPesan[isi].el;
-  el.innerHTML = isi + ` <span class="text-xs status-${stBaru}">${stBaru}</span>`;
-  statusPesan[isi].status = stBaru;
-}
-
-function putarPing(){
-  const audio = document.getElementById("suaraPing");
-  audio.currentTime=0;
-  audio.play().catch(e=>{});
+function sendPing(){
+  audioPing.currentTime=0;
+  audioPing.play();
+  addMsg("PING!","out","S");
+  setTimeout(()=>{
+    let last = document.querySelector(".msg.out:last-child .status");
+    if(last) last.textContent="D";
+  }, 800);
+  setTimeout(()=>{
+    let last = document.querySelector(".msg.out:last-child .status");
+    if(last) last.textContent="R";
+    addMsg("PONG! 🏓","in");
+  }, 1600);
 }
 </script>
 </body>
-  </html>
-  
+</html>
