@@ -17,9 +17,19 @@ https://supabase.com/dashboard lalu pilih proyek itu):
 
 ### 1. Buat tabel — jalankan `supabase/schema.sql`
 - Buka **SQL Editor** → **New query**.
-- Tempel seluruh isi file `supabase/schema.sql` di repo ini → **Run**.
-- File ini membuat tabel `profiles`, `contacts`, `groups`,
-  `group_members`, `messages`, plus RLS dan Realtime.
+- **Hapus isi query lama** (yang gagal dengan error `column "pin" does not exist`),
+  lalu tempel seluruh isi file `supabase/schema.sql` **versi terbaru** di repo ini → **Run**.
+- File ini membuat tabel `posel_profiles`, `posel_contacts`, `posel_groups`,
+  `posel_group_members`, `posel_messages`, plus RLS dan Realtime.
+
+> **Perbaikan v3.1 (2026-11-21):** versi sebelumnya memakai nama tabel polos
+> (`profiles`, `contacts`, ...) dan gagal dijalankan karena tabel
+> `public.profiles` sudah ada di proyek ini dari Andi Kore dengan struktur
+> berbeda (tanpa kolom `pin`). Semua tabel Pos-El sekarang ber-prefix
+> `posel_` dan tidak menyentuh tabel Andi Kore sama sekali. Kalau kamu
+> sudah pernah menjalankan schema lama, tabel-tabel lamanya yang sempat
+> terbentuk (mis. `contacts`, `groups`, `messages`) boleh dibiarkan —
+> tidak dipakai dan tidak mengganggu.
 
 ### 2. Matikan konfirmasi email
 - Buka **Authentication** → **Settings** → matikan **Confirm email**.

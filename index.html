@@ -178,7 +178,7 @@ body{background:#222;background-image:radial(#333 1px,transparent 1px);backgroun
   <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQAtk8N2QDp+ffx96r6vT3d29vbP//8HAA==" type="audio/wav">
 </audio>
 <script type="module">
-/* Pos-El v3 — tampilan refactor terbaru + backend Supabase (sinkron antar HP).
+/* Pos-El v3.1 (tabel Supabase ber-prefix posel_) — tampilan refactor terbaru + backend Supabase (sinkron antar HP).
    Kalau Supabase belum disiapkan, aplikasi jalan Mode Lokal (demo, label jelas). */
 let createClient = null;
 try {
@@ -264,7 +264,7 @@ async function initSupabase() {
   }
   try {
     sb = createClient(SUPABASE_URL, key);
-    const { error } = await sb.from("profiles").select("id").limit(1);
+    const { error } = await sb.from("posel_profiles").select("id").limit(1);
     if (error) throw error;
     mode = "cloud"; setBadge(); return true;
   } catch (e) {
@@ -304,11 +304,11 @@ async function daftar() {
     }
     let pin = acakPin();
     for (let i = 0; i < 5; i++) {
-      const cek = await sb.from("profiles").select("id").eq("pin", pin).limit(1);
+      const cek = await sb.from("posel_profiles").select("id").eq("pin", pin).limit(1);
       if (!cek.data || cek.data.length === 0) break;
       pin = acakPin();
     }
-    const { error: e2 } = await sb.from("profiles").insert({ id: user.id, username: f.username, display_name: f.nama, pin });
+    const { error: e2 } = await sb.from("posel_profiles").insert({ id: user.id, username: f.username, display_name: f.nama, pin });
     if (e2) throw e2;
     me = { id: user.id, username: f.username, display_name: f.nama, pin };
     masukAplikasi();
@@ -322,7 +322,7 @@ async function masuk() {
     const email = f.username + "@pos-el.local";
     const { data, error } = await sb.auth.signInWithPassword({ email, password: f.pass });
     if (error) throw error;
-    const { data: prof } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
+    const { data: prof } = await sb.from("posel_profiles").select("*").eq("id", data.user.id).single();
     if (!prof) throw new Error("Profil tidak ditemukan. Daftar dulu.");
     me = { id: prof.id, username: prof.username, display_name: prof.display_name, pin: prof.pin };
     masukAplikasi();
@@ -373,10 +373,10 @@ async function masukAplikasi() {
 async function muatSemua() {
   try {
     if (mode === "cloud") {
-      const { data: prof } = await sb.from("profiles").select("id,username,display_name,pin,status_text,last_seen").eq("id", me.id).single();
+      const { data: prof } = await sb.from("posel_profiles").select("id,username,display_name,pin,status_text,last_seen").eq("id", me.id).single();
       if (prof) { me.display_name = prof.display_name; me.pin = prof.pin; }
-      await sb.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", me.id);
-      const { data: c } = await sb.from("contacts").select("*, requester:requester_id(id,username,display_name,pin,status_text,last_seen), addressee:addressee_id(id,username,display_name,pin,status_text,last_seen)").or(`requester_id.eq.${me.id},addressee_id.eq.${me.id}`);
+      await sb.from("posel_profiles").update({ last_seen: new Date().toISOString() }).eq("id", me.id);
+      const { data: c } = await sb.from("posel_contacts").select("*, requester:requester_id(id,username,display_name,pin,status_text,last_seen), addressee:addressee_id(id,username,display_name,pin,status_text,last_seen)").or(`requester_id.eq.${me.id},addressee_id.eq.${me.id}`);
       kontakSaya = []; undangan = [];
       (c || []).forEach((row) => {
         if (row.status === "pending" && row.addressee_id === me.id) undangan.push({ id: row.id, dari: row.requester });
@@ -385,8 +385,8 @@ async function muatSemua() {
           if (lain) kontakSaya.push({ ...lain, online: lain.last_seen && (Date.now() - new Date(lain.last_seen).getTime() < 120000) });
         }
       });
-      const { data: g } = await sb.from("group_members").select("group_id, groups(id,name)").eq("user_id", me.id);
-      grupSaya = (g || []).map((x) => x.groups).filter(Boolean);
+      const { data: g } = await sb.from("posel_group_members").select("group_id, posel_groups(id,name)").eq("user_id", me.id);
+      grupSaya = (g || []).map((x) => x.posel_groups).filter(Boolean);
     } else {
       const db = dbLokal();
       kontakSaya = db.contacts.filter((x) => x.owner === me.id && x.status === "accepted")
@@ -412,9 +412,9 @@ async function tambahTeman() {
   if (pin === me.pin) { out.textContent = "Itu PIN kamu sendiri."; return; }
   try {
     if (mode === "cloud") {
-      const { data: t } = await sb.from("profiles").select("id,display_name").eq("pin", pin).single();
+      const { data: t } = await sb.from("posel_profiles").select("id,display_name").eq("pin", pin).single();
       if (!t) { out.textContent = "PIN tidak ditemukan."; return; }
-      const { error } = await sb.from("contacts").insert({ requester_id: me.id, addressee_id: t.id, status: "pending" });
+      const { error } = await sb.from("posel_contacts").insert({ requester_id: me.id, addressee_id: t.id, status: "pending" });
       if (error) throw error;
       out.textContent = "Undangan terkirim ke " + t.display_name + ". Menunggu diterima.";
     } else {
@@ -434,8 +434,8 @@ async function tambahTeman() {
 async function jawabUndangan(id, terima) {
   try {
     if (mode === "cloud") {
-      if (terima) await sb.from("contacts").update({ status: "accepted" }).eq("id", id);
-      else await sb.from("contacts").delete().eq("id", id);
+      if (terima) await sb.from("posel_contacts").update({ status: "accepted" }).eq("id", id);
+      else await sb.from("posel_contacts").delete().eq("id", id);
     } else {
       const db = dbLokal();
       const [o, p] = String(id).split("|");
@@ -486,7 +486,7 @@ function renderKabar() {
 async function simpanStatus() {
   const t = $("inStatus").value.trim();
   try {
-    if (mode === "cloud") await sb.from("profiles").update({ status_text: t }).eq("id", me.id);
+    if (mode === "cloud") await sb.from("posel_profiles").update({ status_text: t }).eq("id", me.id);
     else { const db = dbLokal(); const u = db.users.find((x) => x.id === me.id); if (u) { u.status_text = t; simpanLokal(db); } }
     renderKabar();
   } catch (e) { alert("Gagal simpan status: " + (e.message || e)); }
@@ -512,7 +512,7 @@ function closeChat() {
 }
 async function ambilPesan() {
   if (mode === "cloud") {
-    let q = sb.from("messages").select("*").order("created_at", { ascending: true }).limit(100);
+    let q = sb.from("posel_messages").select("*").order("created_at", { ascending: true }).limit(100);
     if (chatAktif.kind === "dm") q = q.or(`and(sender_id.eq.${me.id},recipient_id.eq.${chatAktif.peerId}),and(sender_id.eq.${chatAktif.peerId},recipient_id.eq.${me.id})`);
     else q = q.eq("group_id", chatAktif.id);
     const { data } = await q;
@@ -553,11 +553,11 @@ function perbaruiTick(m) {
   el.querySelector(".status").textContent = tick + " " + jam(m.created_at);
 }
 async function tandaiTerkirim(m) {
-  if (mode === "cloud") await sb.from("messages").update({ status: "delivered" }).eq("id", m.id);
+  if (mode === "cloud") await sb.from("posel_messages").update({ status: "delivered" }).eq("id", m.id);
   else { const db = dbLokal(); const x = db.messages.find((y) => y.id === m.id); if (x) { x.status = "delivered"; simpanLokal(db); } }
 }
 async function tandaiBaca(m) {
-  if (mode === "cloud") await sb.from("messages").update({ status: "read" }).eq("id", m.id);
+  if (mode === "cloud") await sb.from("posel_messages").update({ status: "read" }).eq("id", m.id);
   else { const db = dbLokal(); const x = db.messages.find((y) => y.id === m.id); if (x) { x.status = "read"; simpanLokal(db); } }
 }
 function sendMsg() {
@@ -576,7 +576,7 @@ async function kirimKeBackend(kind, body) {
     : { recipient_id: null, group_id: chatAktif.id };
   try {
     if (mode === "cloud") {
-      const { data, error } = await sb.from("messages").insert({ sender_id: me.id, recipient_id: target.recipient_id, group_id: target.group_id, kind, body, is_broadcast: false, status: "sent" }).select().single();
+      const { data, error } = await sb.from("posel_messages").insert({ sender_id: me.id, recipient_id: target.recipient_id, group_id: target.group_id, kind, body, is_broadcast: false, status: "sent" }).select().single();
       if (error) throw error;
       if (chatAktif) tambahPesanEl(data);
     } else {
@@ -607,9 +607,9 @@ function buatGrupPrompt() {
 async function buatGrup(nama) {
   try {
     if (mode === "cloud") {
-      const { data: g, error } = await sb.from("groups").insert({ name: nama, created_by: me.id }).select().single();
+      const { data: g, error } = await sb.from("posel_groups").insert({ name: nama, created_by: me.id }).select().single();
       if (error) throw error;
-      await sb.from("group_members").insert([{ group_id: g.id, user_id: me.id }, ...kontakSaya.map((k) => ({ group_id: g.id, user_id: k.id }))]);
+      await sb.from("posel_group_members").insert([{ group_id: g.id, user_id: me.id }, ...kontakSaya.map((k) => ({ group_id: g.id, user_id: k.id }))]);
     } else {
       const db = dbLokal();
       const g = { id: uid(), name: nama, created_by: me.id };
@@ -627,7 +627,7 @@ async function broadcastPrompt() {
   if (!kontakSaya.length) { alert("Belum ada kontak."); return; }
   try {
     if (mode === "cloud") {
-      for (const k of kontakSaya) await sb.from("messages").insert({ sender_id: me.id, recipient_id: k.id, group_id: null, kind: "text", body: teks.trim(), is_broadcast: true, status: "sent" });
+      for (const k of kontakSaya) await sb.from("posel_messages").insert({ sender_id: me.id, recipient_id: k.id, group_id: null, kind: "text", body: teks.trim(), is_broadcast: true, status: "sent" });
     } else {
       const db = dbLokal();
       for (const k of kontakSaya) db.messages.push({ id: uid(), sender_id: me.id, recipient_id: k.id, group_id: null, kind: "text", body: teks.trim(), is_broadcast: true, status: "sent", created_at: new Date().toISOString() });
@@ -643,7 +643,7 @@ function tesPing() { tampilPing(me.display_name + " (tes)"); }
 function langgananRealtime() {
   if (!sb) return;
   sb.channel("posel-msg")
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, async (p) => {
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "posel_messages" }, async (p) => {
       const m = p.new;
       const untukSaya = m.recipient_id === me.id || (m.group_id && grupSaya.some((g) => g.id === m.group_id));
       if (!untukSaya || m.sender_id === me.id) return;
@@ -657,11 +657,11 @@ function langgananRealtime() {
       }
       await muatSemua();
     })
-    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, (p) => {
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "posel_messages" }, (p) => {
       if (p.new.sender_id === me.id) perbaruiTick(p.new);
     })
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "contacts" }, () => muatSemua())
-    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "contacts" }, () => muatSemua())
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "posel_contacts" }, () => muatSemua())
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "posel_contacts" }, () => muatSemua())
     .subscribe();
 }
 function namaPengirim(id) {
@@ -694,7 +694,7 @@ $("inPass").addEventListener("keydown", (e) => { if (e.key === "Enter") masuk();
   if (ok && sb) {
     const { data } = await sb.auth.getSession();
     if (data.session) {
-      const { data: prof } = await sb.from("profiles").select("*").eq("id", data.session.user.id).single();
+      const { data: prof } = await sb.from("posel_profiles").select("*").eq("id", data.session.user.id).single();
       if (prof) { me = { id: prof.id, username: prof.username, display_name: prof.display_name, pin: prof.pin }; masukAplikasi(); }
     }
   }
