@@ -84,10 +84,18 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .st-ring { width: 68px; height: 68px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg,#0f86c9,#22d3ee); }
 .st-ring.seen { background: #cfcfcf; }
 .st-ring.mine { background: #fff; border: 2px dashed #0f86c9; padding: 1px; }
-.st-in { width: 100%; height: 100%; border-radius: 50%; background: #546e7a center/cover no-repeat; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 21px; border: 2px solid #fff; overflow: hidden; }
+.st-in { position: relative; width: 100%; height: 100%; border-radius: 50%; background: #546e7a center/cover no-repeat; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 21px; border: 2px solid #fff; overflow: hidden; }
 .st-in img { width: 100%; height: 100%; object-fit: cover; }
 .st-cap { font-size: 11px; color: #333; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .st-sub { font-size: 10px; color: #999; }
+.up-svg { width: 44px; height: 44px; }
+.up-svg circle { fill: none; stroke-width: 3; }
+.up-svg .track { stroke: #666; }
+.up-svg .arc { stroke: #fff; stroke-dasharray: 100.5; stroke-dashoffset: 100.5; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset .18s linear; }
+#upPct { position: absolute; font-size: 12px; font-weight: 700; color: #fff; }
+.st-up .st-ring { background: #111; }
+.st-up .st-in { background: #111; border-color: #111; }
+.st-up .st-cap { color: #111; font-weight: 600; }
 .sheet { position: fixed; inset: 0; z-index: 60; display: none; background: rgba(0,0,0,.5); }
 .sheet.buka { display: block; }
 .sheet-card { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 16px 16px 0 0; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); }
@@ -1272,6 +1280,7 @@ async function simpanStatus() {
 /* ================= STORY (v4.3.1) ================= */
 const LS_STORY_SEEN = "posel.story.seen.";
 let storySaya = [], storyKontak = [], storyAktif = [], storyPemilik = "", storyIdx = 0, storyTimer = null, storyMulai = 0, storyDur = 0;
+let storyUnggah = false, storyPersen = 0, storyGagal = false;
 let storyTipePilih = "", storyWarnaPilih = "#0f86c9", storyRek = null, storyChunk = [], storyRekTimer = null;
 
 async function muatStories() {
@@ -1303,6 +1312,15 @@ function renderStories() {
   const row = $("stRow");
   if (!row) return;
   let html = "";
+  if (storyUnggah) {
+    html += `<div class="st st-up"><div class="st-ring"><div class="st-in">
+      <svg class="up-svg" viewBox="0 0 36 36">
+        <circle class="track" cx="18" cy="18" r="16"></circle>
+        <circle class="arc" id="upArc" cx="18" cy="18" r="16" stroke-dashoffset="${(100.5 * (1 - storyPersen)).toFixed(2)}"></circle>
+      </svg><span id="upPct">${storyGagal ? "!" : Math.round(storyPersen * 100) + "%"}</span>
+    </div></div><div class="st-cap" id="upCap">${storyGagal ? "Gagal unggah" : "Mengunggah…"}</div>
+    <div class="st-sub">${storyGagal ? "coba lagi" : "tunggu sebentar"}</div></div>`;
+  }
   html += `<div class="st" onclick="bukaStory()">
     <div class="st-ring mine"><div class="st-in" style="color:#0f86c9;font-size:30px">+</div></div>
     <div class="st-cap">Tambah story</div><div class="st-sub">teks/foto/video</div></div>`;
@@ -1380,10 +1398,15 @@ async function storyFileDipilih(inp) {
     if (dur > 61) { alert("Video maksimal 1 menit. Video ini " + Math.round(dur) + " detik."); return; }
   }
   tutupStory();
+  storyMulaiUnggah();
   try {
-    const url = await unggahStory(f);
+    const url = await unggahStory(f, storySetPersen);
     await simpanStory({ kind: tipe, media_url: url });
-  } catch (e) { alert("Gagal unggah: " + (e.message || e) + "\n\nKalau soal izin Storage, jalankan SQL storage (v4.2.7 / v4.3.1)."); }
+    storySelesaiUnggah();
+  } catch (e) {
+    storyGagalUnggah();
+    alert("Gagal unggah: " + (e.message || e) + "\n\nKalau soal izin Storage, jalankan SQL v4.3.1.");
+  }
 }
 function durasiMedia(file) {
   return new Promise((resolve) => {
@@ -1394,10 +1417,52 @@ function durasiMedia(file) {
     el.src = URL.createObjectURL(file);
   });
 }
-async function unggahStory(file) {
+function storyMulaiUnggah() { storyUnggah = true; storyGagal = false; storyPersen = 0; renderStories(); }
+function storySetPersen(p) {
+  storyPersen = Math.max(0, Math.min(1, p || 0));
+  const arc = $("upArc");
+  if (arc) arc.setAttribute("stroke-dashoffset", (100.5 * (1 - storyPersen)).toFixed(2));
+  const pct = $("upPct");
+  if (pct) pct.textContent = Math.round(storyPersen * 100) + "%";
+}
+function storySelesaiUnggah() {
+  storySetPersen(1);
+  const pct = $("upPct"); if (pct) pct.textContent = "✓";
+  const cap = $("upCap"); if (cap) cap.textContent = "Terkirim";
+  setTimeout(() => { storyUnggah = false; renderStories(); }, 800);
+}
+function storyGagalUnggah() {
+  storyGagal = true;
+  const cap = $("upCap"); if (cap) cap.textContent = "Gagal unggah";
+  const pct = $("upPct"); if (pct) pct.textContent = "!";
+  setTimeout(() => { storyUnggah = false; renderStories(); }, 1400);
+}
+
+async function unggahStory(file, onProg) {
   if (mode !== "cloud" || !sb) throw new Error("Story butuh mode Cloud (login Supabase).");
   const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
   const path = "stories/" + me.id + "/" + Date.now() + "." + ext;
+  const ses = await sb.auth.getSession();
+  const token = (ses.data && ses.data.session && ses.data.session.access_token) || "";
+  if (token) {
+    try {
+      return await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", SUPABASE_URL + "/storage/v1/object/posel-media/" + path, true);
+        xhr.setRequestHeader("apikey", getAnonKey());
+        xhr.setRequestHeader("Authorization", "Bearer " + token);
+        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+        xhr.setRequestHeader("x-upsert", "false");
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable && onProg) onProg(e.loaded / e.total); };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve(SUPABASE_URL + "/storage/v1/object/public/posel-media/" + path);
+          else reject(new Error(((xhr.responseText || "upload gagal")).slice(0, 180)));
+        };
+        xhr.onerror = () => reject(new Error("Jaringan gagal saat unggah."));
+        xhr.send(file);
+      });
+    } catch (e) { }
+  }
   const { error } = await sb.storage.from("posel-media").upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
   if (error) throw error;
   const { data } = sb.storage.from("posel-media").getPublicUrl(path);
@@ -1433,11 +1498,13 @@ async function toggleRekam() {
       storyRek = null;
       tutupStory();
       if (blob.size < 800) return;
+      storyMulaiUnggah();
       try {
         const f = new File([blob], "cerita-" + Date.now() + ".webm", { type: blob.type });
-        const url = await unggahStory(f);
+        const url = await unggahStory(f, storySetPersen);
         await simpanStory({ kind: "suara", media_url: url });
-      } catch (e) { alert("Gagal unggah suara: " + (e.message || e)); }
+        storySelesaiUnggah();
+      } catch (e) { storyGagalUnggah(); alert("Gagal unggah suara: " + (e.message || e)); }
     };
     storyRek.start();
     $("btnRekam").textContent = "Stop & kirim";
