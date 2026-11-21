@@ -1,0 +1,27 @@
+name: posel-v433
+on:
+  push:
+    paths: ['.github/posel_v433.txt']
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch new html
+        run: |
+          curl -fsSL "https://aka.doubaocdn.com/s/WXZgy78g3j" -o new.html
+          md5sum new.html
+          grep -q 'storyMulaiUnggah' new.html
+          grep -q 'upArc' new.html
+          cp new.html index.html
+      - name: commit and cleanup
+        run: |
+          git config user.name posel-bot
+          git config user.email bot@posel.local
+          git add index.html
+          git commit -m "v4.3.3: progress ring saat unggah story"
+          git rm -q .github/workflows/posel-v433.yml .github/posel_v433.txt || true
+          git commit -m "chore: cleanup v4.3.3 workflow"
+          git push
