@@ -7,6 +7,28 @@ bunyi + banner merah), grup, broadcast, dan status Kabar.
 
 Live: https://tulus-kn.github.io/Pos-El/
 
+## Perubahan v3.4 (2026-11-21) — Desain BBM gradient + ikon baru
+- Tampilan dirombak total mengikuti desain kiriman user: halaman Welcome / Login /
+  Daftar dengan gradient ungu `#3b2470` → biru `#0077bb`, logo Pos-El baru
+  (gelembung chat biru + amplop putih, file `icon-posel.png`), header biru BBM
+  `#0088cc`, daftar chat ala BBM, tab Umpan (status Kabar sebagai kartu feed),
+  chat room dengan bubble kirim biru muda `#e8f4fc` dan terima putih, tab bawah
+  hitam (Kembali / Undang / Kirim / Lebih), titik online `.ping-bbm` hijau
+  beranimasi dan titik offline `.ping-off` abu-abu. Tombol PING! tetap merah
+  mencolok. Login dan daftar kini halaman terpisah: daftar meminta konfirmasi
+  password (ditolak kalau tidak sama) dan centang Syarat &amp; Kebijakan.
+  Logika tidak berubah: auth, PIN, chat ✓ → D → R, Ping, grup, broadcast,
+  Kabar, online indicator, Mode Lokal, dan tabel `posel_*` tetap sama.
+  Kunci anon tetap tertanam sebagai `DEFAULT_ANON_KEY` di `index.html`.
+- Ikon: `icon-posel.png` (512px, crop dari gambar kiriman user; watermark
+  "豆包 AI 生成" di pojok kanan bawah sudah dipotong. Latar kotak-kotak
+  checkerboard pada gambar asli bukan transparan, jadi masih terlihat di
+  dalam kartu logo putih dan di ikon launcher. CATATAN: file PNG biner tidak
+  bisa di-push lewat connector GitHub (snapshot hanya menerima file UTF-8),
+  jadi logo + favicon di `index.html` memakai data URI base64 dari versi
+  256px ikon yang sama; file sumber `icon-posel.png` tetap tersimpan di
+  workspace sebagai arsip).
+
 ## Perubahan v3.3 (2026-11-21) — Tema BBM Jadul (hijau gelap)
 - Tampilan dirombak jadi tema BBM Jadul kiriman user: body gelap `#222222`,
   container `#2c2c2c` (lebar maks 430px), header hijau `#009929`, avatar hijau,
