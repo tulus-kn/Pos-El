@@ -77,6 +77,57 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .pane { background: #ececec; padding: 0 0 calc(20px + max(10px, env(safe-area-inset-bottom))); }
 .pane h4 { color: #7a7a7a; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; padding: 12px 13px 6px; }
 
+/* ========== STORY (v4.3.1) ========== */
+.strow { display: flex; gap: 13px; overflow-x: auto; padding: 12px 13px 14px; background: #fff; border-bottom: 1px solid #e2e2e2; -webkit-overflow-scrolling: touch; }
+.strow::-webkit-scrollbar { display: none; }
+.st { width: 72px; flex-shrink: 0; text-align: center; }
+.st-ring { width: 68px; height: 68px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg,#0f86c9,#22d3ee); }
+.st-ring.seen { background: #cfcfcf; }
+.st-ring.mine { background: #fff; border: 2px dashed #0f86c9; padding: 1px; }
+.st-in { width: 100%; height: 100%; border-radius: 50%; background: #546e7a center/cover no-repeat; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 21px; border: 2px solid #fff; overflow: hidden; }
+.st-in img { width: 100%; height: 100%; object-fit: cover; }
+.st-cap { font-size: 11px; color: #333; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-sub { font-size: 10px; color: #999; }
+.sheet { position: fixed; inset: 0; z-index: 60; display: none; background: rgba(0,0,0,.5); }
+.sheet.buka { display: block; }
+.sheet-card { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 16px 16px 0 0; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); }
+.sheet-card h3 { margin: 0 0 12px; font-size: 16px; color: #0f86c9; }
+.st-opsi { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+.st-opsi div { text-align: center; font-size: 11px; color: #555; padding: 10px 2px; border: 1px solid #e0e0e0; border-radius: 12px; cursor: pointer; }
+.st-opsi div b { display: block; font-size: 22px; margin-bottom: 4px; }
+.st-opsi div:active { background: #eaf6fd; }
+.st-tulis { width: 100%; height: 110px; border: 1px solid #d8d8d8; border-radius: 10px; padding: 12px; font-size: 14px; resize: none; outline: none; }
+.st-warna { display: flex; gap: 8px; margin: 10px 0; }
+.st-warna span { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #ddd; cursor: pointer; }
+.st-warna span.on { box-shadow: 0 0 0 2px #0f86c9; }
+.st-btns { display: flex; gap: 8px; margin-top: 12px; }
+.st-btns button { flex: 1; height: 42px; border: 0; border-radius: 8px; font-size: 14px; font-weight: 600; }
+.st-batal { background: #ececec; color: #444; }
+.st-kirim { background: #0f86c9; color: #fff; }
+.rekam-info { text-align: center; font-size: 13px; color: #666; margin: 8px 0; }
+.rekam-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #d32f2f; margin-right: 6px; animation: kedip 1s infinite; }
+@keyframes kedip { 50% { opacity: .2; } }
+.viewer { position: fixed; inset: 0; z-index: 70; background: #000; display: none; flex-direction: column; }
+.viewer.buka { display: flex; }
+.vw-bars { display: flex; gap: 4px; padding: 10px 10px 0; }
+.vw-seg { flex: 1; height: 3px; background: rgba(255,255,255,.3); border-radius: 2px; overflow: hidden; }
+.vw-seg i { display: block; height: 100%; width: 0; background: #fff; }
+.vw-who { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: #fff; }
+.vw-who .av { width: 36px; height: 36px; border-radius: 50%; background: #546e7a center/cover; display: grid; place-items: center; font-weight: 700; color: #fff; flex-shrink: 0; }
+.vw-who b { font-size: 14px; }
+.vw-who span { font-size: 11px; opacity: .75; margin-left: 6px; }
+.vw-body { flex: 1; margin: 0 12px; border-radius: 10px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+.vw-body img, .vw-body video { max-width: 100%; max-height: 100%; object-fit: contain; }
+.vw-teks { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 26px; font-size: 22px; line-height: 1.5; font-weight: 600; text-align: center; color: #fff; }
+.vw-audio { width: 100%; padding: 20px; text-align: center; color: #fff; }
+.vw-audio .ikon { font-size: 54px; display: block; margin-bottom: 12px; }
+.vw-cap { position: absolute; left: 12px; right: 12px; bottom: 12px; color: #fff; font-size: 14px; line-height: 1.4; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+.vw-tap { position: absolute; top: 0; bottom: 0; width: 30%; }
+.vw-tap.kiri { left: 0; } .vw-tap.kanan { right: 0; }
+.vw-bawah { display: flex; gap: 10px; align-items: center; padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); }
+.vw-balas { flex: 1; border: 1px solid rgba(255,255,255,.35); border-radius: 20px; padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,.8); background: transparent; }
+.vw-hati { font-size: 24px; }
+
 /* ========== DRAWER TELEGRAM STYLE (v4.3) ========== */
 .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; display: none; }
 .scrim.buka { display: block; }
@@ -308,6 +359,8 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 
     <!-- Tab Umpan / Kabar -->
     <div id="tabKabar" class="pane" style="display:none">
+      <h4 style="padding-top:12px">Story &amp; Umpan</h4>
+      <div class="strow" id="stRow"></div>
       <div class="field"><label>Status saya</label>
         <div style="display:flex;gap:8px">
           <input id="inStatus" placeholder="Lagi apa?" style="flex:1;min-width:0">
@@ -446,6 +499,56 @@ body.chat-aktif { overflow: hidden; height: 100%; }
   </div>
 
 </div>
+
+<div class="sheet" id="sheetStory" onclick="if(event.target===this)tutupStory()">
+  <div class="sheet-card">
+    <h3 id="sheetStoryJudul">Buat story</h3>
+    <div id="sheetStoryMenu">
+      <div class="st-opsi">
+        <div onclick="storyTeks()"><b>🅣</b>Teks</div>
+        <div onclick="storyPilih('foto')"><b>🖼️</b>Foto</div>
+        <div onclick="storyPilih('video')"><b>🎬</b>Video</div>
+        <div onclick="storyRekam()"><b>🎙️</b>Suara</div>
+        <div onclick="storyPilih('musik')"><b>🎵</b>Musik</div>
+      </div>
+      <div class="st-btns"><button class="st-batal" onclick="tutupStory()">Batal</button></div>
+    </div>
+    <div id="sheetStoryTeks" style="display:none">
+      <textarea class="st-tulis" id="stTeks" maxlength="300" placeholder="Tulis story…"></textarea>
+      <div class="st-warna" id="stWarna"></div>
+      <div class="st-btns">
+        <button class="st-batal" onclick="tutupStory()">Batal</button>
+        <button class="st-kirim" onclick="kirimStoryTeks()">Kirim</button>
+      </div>
+    </div>
+    <div id="sheetStoryRekam" style="display:none">
+      <div class="rekam-info" id="rekamInfo"><span class="rekam-dot"></span>siap merekam</div>
+      <div class="st-btns">
+        <button class="st-batal" onclick="batalRekam()">Batal</button>
+        <button class="st-kirim" id="btnRekam" onclick="toggleRekam()">Mulai rekam</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="viewer" id="viewerStory">
+  <div class="vw-bars" id="vwBars"></div>
+  <div class="vw-who">
+    <div class="av" id="vwAv">A</div>
+    <div><b id="vwNama">—</b><span id="vwWaktu"></span></div>
+    <div style="flex:1"></div>
+    <div style="font-size:22px" onclick="tutupViewer()">✕</div>
+  </div>
+  <div class="vw-body" id="vwBody">
+    <div class="vw-tap kiri" onclick="storyPrev()"></div>
+    <div class="vw-tap kanan" onclick="storyNext()"></div>
+  </div>
+  <div class="vw-bawah">
+    <input class="vw-balas" id="vwBalas" placeholder="Balas story…" readonly onclick="balasStory()">
+    <div class="vw-hati" onclick="sukaStory()">❤️</div>
+  </div>
+</div>
+<input type="file" id="inpStory" style="display:none" onchange="storyFileDipilih(this)">
 
 <div id="bannerPing">🔔 PING! dari <span id="bannerPingDari"></span></div>
 <audio id="suaraPing">
@@ -853,7 +956,7 @@ async function muatSemua() {
       grupSaya = db.members.filter((x) => x.user_id === me.id).map((x) => db.groups.find((g) => g.id === x.group_id)).filter(Boolean);
     }
   } catch (e) { console.warn("muatSemua gagal", e); }
-  renderKontak(); renderChat(); renderKabar();
+  renderKontak(); renderChat(); renderKabar(); muatStories();
 }
 function pindahTab(id) {
   ["tabChat", "tabKontak", "tabKabar", "tabSetting"].forEach((t) => { $(t).style.display = t === id ? "block" : "none"; });
@@ -1162,6 +1265,287 @@ async function simpanStatus() {
     else { const db = dbLokal(); const u = db.users.find((x) => x.id === me.id); if (u) { u.status_text = t; simpanLokal(db); } }
     renderKabar();
   } catch (e) { alert("Gagal simpan status: " + (e.message || e)); }
+}
+
+
+/* ================= STORY (v4.3.1) ================= */
+const LS_STORY_SEEN = "posel.story.seen.";
+let storySaya = [], storyKontak = [], storyAktif = [], storyPemilik = "", storyIdx = 0, storyTimer = null, storyMulai = 0, storyDur = 0;
+let storyTipePilih = "", storyWarnaPilih = "#0f86c9", storyRek = null, storyChunk = [], storyRekTimer = null;
+
+async function muatStories() {
+  if (mode !== "cloud" || !sb) { storySaya = []; storyKontak = []; renderStories(); return; }
+  try {
+    const { data } = await sb.from("posel_stories").select("*").gt("expires_at", new Date().toISOString()).order("created_at", { ascending: true });
+    const semua = data || [];
+    storySaya = semua.filter((x) => x.user_id === me.id);
+    storyKontak = [];
+    semua.filter((x) => x.user_id !== me.id).forEach((x) => {
+      const u = kontakSaya.find((k) => k.id === x.user_id);
+      if (!u) return;
+      let g = storyKontak.find((y) => y.user.id === u.id);
+      if (!g) { g = { user: u, items: [] }; storyKontak.push(g); }
+      g.items.push(x);
+    });
+  } catch (e) { }
+  renderStories();
+}
+
+function waktuStory(t) {
+  const d = Math.floor((Date.now() - new Date(t).getTime()) / 60000);
+  if (d < 1) return "baru saja";
+  if (d < 60) return d + " menit lalu";
+  return Math.floor(d / 60) + " jam lalu";
+}
+
+function renderStories() {
+  const row = $("stRow");
+  if (!row) return;
+  let html = "";
+  const sayaBaru = storySaya.length ? storySaya[storySaya.length - 1].created_at : "";
+  const sudah = storySaya.length && localStorage.getItem(LS_STORY_SEEN + me.id) >= sayaBaru;
+  html += `<div class="st" onclick="${storySaya.length ? "bukaStoryUser('" + me.id + "')" : "bukaStory()"}">
+    <div class="st-ring ${storySaya.length ? (sudah ? "seen" : "") : "mine"}">
+      <div class="st-in">${storySaya.length ? (me.avatar_url ? `<img src="${esc(me.avatar_url)}">` : esc((me.display_name || "?").charAt(0).toUpperCase())) : "+"}</div>
+    </div><div class="st-cap">Story saya</div>
+    <div class="st-sub">${storySaya.length ? storySaya.length + " item" : "ketuk +"}</div></div>`;
+  storyKontak.forEach((g) => {
+    const nama = namaAlias(g.user.id, g.user.display_name);
+    const last = g.items[g.items.length - 1].created_at;
+    const sudah = localStorage.getItem(LS_STORY_SEEN + g.user.id) >= last;
+    html += `<div class="st" onclick="bukaStoryUser('${g.user.id}')">
+      <div class="st-ring ${sudah ? "seen" : ""}"><div class="st-in">${g.user.avatar_url ? `<img src="${esc(g.user.avatar_url)}">` : esc(nama.charAt(0).toUpperCase())}</div></div>
+      <div class="st-cap">${esc(nama)}</div><div class="st-sub">${sudah ? "sudah dilihat" : g.items.length + " baru"}</div></div>`;
+  });
+  if (!storySaya.length && !storyKontak.length) {
+    html += `<div style="align-self:center;color:#8a8a8a;font-size:12px;padding:14px 4px">Belum ada story. Ketuk + untuk buat.</div>`;
+  }
+  row.innerHTML = html;
+}
+
+function bukaStory() {
+  $("sheetStory").classList.add("buka");
+  $("sheetStoryJudul").textContent = "Buat story";
+  $("sheetStoryMenu").style.display = "block";
+  $("sheetStoryTeks").style.display = "none";
+  $("sheetStoryRekam").style.display = "none";
+}
+function tutupStory() {
+  $("sheetStory").classList.remove("buka");
+  batalRekam(true);
+}
+function storyTeks() {
+  $("sheetStoryMenu").style.display = "none";
+  $("sheetStoryTeks").style.display = "block";
+  $("sheetStoryJudul").textContent = "Story teks";
+  const warna = ["#0f86c9", "#d32f2f", "#2e7d32", "#6a1b9a", "#ef6c00", "#455a64"];
+  $("stWarna").innerHTML = warna.map((w) => `<span data-w="${w}" style="background:${w}" class="${w === storyWarnaPilih ? "on" : ""}" onclick="pilihWarnaStory('${w}')"></span>`).join("");
+  setTimeout(() => $("stTeks").focus(), 100);
+}
+function pilihWarnaStory(w) {
+  storyWarnaPilih = w;
+  Array.from($("stWarna").children).forEach((el) => el.classList.toggle("on", el.dataset.w === w));
+}
+async function kirimStoryTeks() {
+  const t = ($("stTeks").value || "").trim();
+  if (!t) { alert("Tulis dulu story-nya."); return; }
+  try {
+    await simpanStory({ kind: "teks", teks: t, warna: storyWarnaPilih });
+    $("stTeks").value = "";
+    tutupStory();
+  } catch (e) { alert("Gagal kirim story: " + (e.message || e)); }
+}
+function storyPilih(tipe) {
+  storyTipePilih = tipe;
+  const inp = $("inpStory");
+  inp.value = "";
+  inp.accept = tipe === "foto" ? "image/*" : tipe === "video" ? "video/*" : "audio/mpeg,audio/mp3,audio/*";
+  inp.click();
+}
+async function storyFileDipilih(inp) {
+  const f = inp.files && inp.files[0];
+  inp.value = "";
+  if (!f) return;
+  const tipe = storyTipePilih;
+  const mb = f.size / 1048576;
+  if (tipe === "foto" && mb > 12) { alert("Foto maksimal 12 MB."); return; }
+  if (tipe === "video" && mb > 40) { alert("Video maksimal 40 MB (durasi maks 1 menit)."); return; }
+  if (tipe === "musik" && mb > 45) { alert("MP3 maksimal 45 MB."); return; }
+  if (tipe === "video") {
+    const dur = await durasiMedia(f);
+    if (dur > 61) { alert("Video maksimal 1 menit. Video ini " + Math.round(dur) + " detik."); return; }
+  }
+  tutupStory();
+  try {
+    const url = await unggahStory(f);
+    await simpanStory({ kind: tipe, media_url: url });
+  } catch (e) { alert("Gagal unggah: " + (e.message || e) + "\n\nKalau soal izin Storage, jalankan SQL storage (v4.2.7 / v4.3.1)."); }
+}
+function durasiMedia(file) {
+  return new Promise((resolve) => {
+    const el = document.createElement(file.type.startsWith("video") ? "video" : "audio");
+    el.preload = "metadata";
+    el.onloadedmetadata = () => { resolve(el.duration || 0); URL.revokeObjectURL(el.src); };
+    el.onerror = () => resolve(0);
+    el.src = URL.createObjectURL(file);
+  });
+}
+async function unggahStory(file) {
+  if (mode !== "cloud" || !sb) throw new Error("Story butuh mode Cloud (login Supabase).");
+  const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const path = "stories/" + me.id + "/" + Date.now() + "." + ext;
+  const { error } = await sb.storage.from("posel-media").upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
+  if (error) throw error;
+  const { data } = sb.storage.from("posel-media").getPublicUrl(path);
+  return data.publicUrl;
+}
+async function simpanStory(obj) {
+  if (mode !== "cloud" || !sb) throw new Error("Story butuh mode Cloud.");
+  const { error } = await sb.from("posel_stories").insert({ user_id: me.id, kind: obj.kind, teks: obj.teks || "", media_url: obj.media_url || "", warna: obj.warna || "#0f86c9" });
+  if (error) throw error;
+  await muatStories();
+  muatSemua();
+}
+
+/* --- rekam voice note --- */
+function storyRekam() {
+  $("sheetStoryMenu").style.display = "none";
+  $("sheetStoryRekam").style.display = "block";
+  $("sheetStoryJudul").textContent = "Story suara";
+  $("rekamInfo").innerHTML = '<span class="rekam-dot"></span>siap merekam (maks 60 detik)';
+  $("btnRekam").textContent = "Mulai rekam";
+}
+async function toggleRekam() {
+  if (storyRek) { storyRek.stop(); return; }
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    storyChunk = [];
+    storyRek = new MediaRecorder(st);
+    storyRek.ondataavailable = (e) => { if (e.data.size) storyChunk.push(e.data); };
+    storyRek.onstop = async () => {
+      st.getTracks().forEach((t) => t.stop());
+      clearTimeout(storyRekTimer);
+      const blob = new Blob(storyChunk, { type: storyRek.mimeType || "audio/webm" });
+      storyRek = null;
+      tutupStory();
+      if (blob.size < 800) return;
+      try {
+        const f = new File([blob], "cerita-" + Date.now() + ".webm", { type: blob.type });
+        const url = await unggahStory(f);
+        await simpanStory({ kind: "suara", media_url: url });
+      } catch (e) { alert("Gagal unggah suara: " + (e.message || e)); }
+    };
+    storyRek.start();
+    $("btnRekam").textContent = "Stop & kirim";
+    let s = 0;
+    storyRekTimer = setInterval(() => {
+      s++;
+      $("rekamInfo").innerHTML = '<span class="rekam-dot"></span>merekam ' + s + " detik";
+      if (s >= 60) { try { storyRek.stop(); } catch (e) {} }
+    }, 1000);
+  } catch (e) { alert("Mikrofon tidak bisa dipakai: " + (e.message || e)); }
+}
+function batalRekam(diam) {
+  clearTimeout(storyRekTimer);
+  if (storyRek) { try { storyRek.onstop = null; storyRek.stop(); } catch (e) {} storyRek = null; }
+  if (!diam) tutupStory();
+}
+
+/* --- viewer --- */
+function bukaStoryUser(uid) {
+  if (uid === me.id && !storySaya.length) { bukaStory(); return; }
+  if (uid === me.id) storyAktif = storySaya.slice();
+  else {
+    const g = storyKontak.find((y) => y.user.id === uid);
+    if (!g) return;
+    storyAktif = g.items.slice();
+  }
+  if (!storyAktif.length) return;
+  storyPemilik = uid;
+  const pemilik = uid === me.id ? { display_name: me.display_name, avatar_url: me.avatar_url } : (storyAktif[0] && kontakSaya.find((k) => k.id === uid)) || {};
+  $("vwNama").textContent = pemilik.display_name || "Story";
+  const av = $("vwAv");
+  av.textContent = (pemilik.display_name || "?").charAt(0).toUpperCase();
+  if (pemilik.avatar_url) { av.style.backgroundImage = "url(" + pemilik.avatar_url + ")"; av.textContent = ""; } else av.style.backgroundImage = "";
+  $("viewerStory").classList.add("buka");
+  $("vwBars").innerHTML = storyAktif.map(() => '<div class="vw-seg"><i></i></div>').join("");
+  storyIdx = 0;
+  tampilStory(0);
+}
+function tampilStory(i) {
+  clearInterval(storyTimer);
+  const body = $("vwBody");
+  body.querySelectorAll("video,audio").forEach((m) => { try { m.pause(); } catch (e) {} });
+  const item = storyAktif[i];
+  if (!item) { tutupViewer(); return; }
+  const segs = Array.from($("vwBars").children);
+  segs.forEach((sg, k) => { sg.firstChild.style.width = k < i ? "100%" : "0%"; });
+  $("vwWaktu").textContent = waktuStory(item.created_at);
+  let isi = "";
+  if (item.kind === "teks") {
+    isi = `<div class="vw-teks" style="background:linear-gradient(160deg,${item.warna || "#0f86c9"},#111)">${esc(item.teks || "")}</div>`;
+    storyDur = 6000;
+  } else if (item.kind === "foto") {
+    isi = `<img src="${esc(item.media_url)}" alt="">`;
+    storyDur = 6000;
+  } else if (item.kind === "video") {
+    isi = `<video src="${esc(item.media_url)}" autoplay playsinline></video>`;
+    storyDur = 0;
+  } else if (item.kind === "suara" || item.kind === "musik") {
+    isi = `<div class="vw-audio"><span class="ikon">${item.kind === "musik" ? "🎵" : "🎙️"}</span><audio src="${esc(item.media_url)}" autoplay controls></audio></div>`;
+    storyDur = 0;
+  }
+  if (item.teks && item.kind !== "teks") isi += `<div class="vw-cap">${esc(item.teks)}</div>`;
+  body.innerHTML = isi + '<div class="vw-tap kiri" onclick="storyPrev()"></div><div class="vw-tap kanan" onclick="storyNext()"></div>';
+  const media = body.querySelector("video,audio");
+  if (media) {
+    media.onended = () => storyNext();
+    media.onloadedmetadata = () => { storyDur = media.duration ? media.duration * 1000 : 0; mulaiBar(); };
+    media.play().catch(() => {});
+  } else mulaiBar();
+  localStorage.setItem(LS_STORY_SEEN + storyPemilik, storyAktif[i].created_at);
+  renderStories();
+}
+function mulaiBar() {
+  clearInterval(storyTimer);
+  storyMulai = Date.now();
+  const seg = $("vwBars").children[storyIdx];
+  if (!seg) return;
+  const bar = seg.firstChild;
+  if (!storyDur) { bar.style.width = "100%"; return; }
+  storyTimer = setInterval(() => {
+    const p = Math.min(1, (Date.now() - storyMulai) / storyDur);
+    bar.style.width = (p * 100) + "%";
+    if (p >= 1) { clearInterval(storyTimer); storyNext(); }
+  }, 80);
+}
+function storyNext() { if (storyIdx + 1 >= storyAktif.length) { tutupViewer(); return; } storyIdx++; tampilStory(storyIdx); }
+function storyPrev() { if (storyIdx === 0) { tampilStory(0); return; } storyIdx--; tampilStory(storyIdx); }
+function tutupViewer() {
+  clearInterval(storyTimer);
+  $("viewerStory").classList.remove("buka");
+  $("vwBody").querySelectorAll("video,audio").forEach((m) => { try { m.pause(); } catch (e) {} });
+  $("vwBody").innerHTML = "";
+  storyAktif = [];
+}
+function balasStory() {
+  const item = storyAktif[storyIdx];
+  if (!item) return;
+  const uid = item.user_id;
+  if (uid === me.id) { alert("Ini story kamu sendiri."); return; }
+  const u = kontakSaya.find((k) => k.id === uid);
+  if (!u) { alert("Kontak tidak ditemukan."); return; }
+  tutupViewer();
+  gantiHalaman("main");
+  pindahTab("tabChat");
+  openChat("dm", u.id, namaAlias(u.id, u.display_name), u.pin);
+}
+async function sukaStory() {
+  const item = storyAktif[storyIdx];
+  if (!item) return;
+  $("vwBody").style.transition = "transform .18s";
+  $("vwBody").style.transform = "scale(.97)";
+  setTimeout(() => { $("vwBody").style.transform = ""; }, 180);
 }
 
 /* ---------- Ping di latar (APK) ---------- */
@@ -1651,7 +2035,7 @@ window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
 window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.kirimMediaBesar = kirimMediaBesar;
 window.bukaMenuChat = bukaMenuChat;
-window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
+window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
 $("btnSimpanKey").onclick = async () => {
   const k = $("inAnonKey").value.trim();
   if (!k) { pesanAuth("Tempel anon key dulu."); return; }
