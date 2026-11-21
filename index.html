@@ -537,6 +537,7 @@ body.chat-aktif { overflow: hidden; height: 100%; }
     <div class="av" id="vwAv">A</div>
     <div><b id="vwNama">—</b><span id="vwWaktu"></span></div>
     <div style="flex:1"></div>
+    <div id="vwHapus" style="font-size:19px;margin-right:14px;display:none" onclick="hapusStoryIni()">🗑</div>
     <div style="font-size:22px" onclick="tutupViewer()">✕</div>
   </div>
   <div class="vw-body" id="vwBody">
@@ -1302,13 +1303,16 @@ function renderStories() {
   const row = $("stRow");
   if (!row) return;
   let html = "";
-  const sayaBaru = storySaya.length ? storySaya[storySaya.length - 1].created_at : "";
-  const sudah = storySaya.length && localStorage.getItem(LS_STORY_SEEN + me.id) >= sayaBaru;
-  html += `<div class="st" onclick="${storySaya.length ? "bukaStoryUser('" + me.id + "')" : "bukaStory()"}">
-    <div class="st-ring ${storySaya.length ? (sudah ? "seen" : "") : "mine"}">
-      <div class="st-in">${storySaya.length ? (me.avatar_url ? `<img src="${esc(me.avatar_url)}">` : esc((me.display_name || "?").charAt(0).toUpperCase())) : "+"}</div>
-    </div><div class="st-cap">Story saya</div>
-    <div class="st-sub">${storySaya.length ? storySaya.length + " item" : "ketuk +"}</div></div>`;
+  html += `<div class="st" onclick="bukaStory()">
+    <div class="st-ring mine"><div class="st-in" style="color:#0f86c9;font-size:30px">+</div></div>
+    <div class="st-cap">Tambah story</div><div class="st-sub">teks/foto/video</div></div>`;
+  if (storySaya.length) {
+    const sayaBaru = storySaya[storySaya.length - 1].created_at;
+    const sudah = localStorage.getItem(LS_STORY_SEEN + me.id) >= sayaBaru;
+    html += `<div class="st" onclick="bukaStoryUser('${me.id}')">
+      <div class="st-ring ${sudah ? "seen" : ""}"><div class="st-in">${me.avatar_url ? `<img src="${esc(me.avatar_url)}">` : esc((me.display_name || "?").charAt(0).toUpperCase())}</div></div>
+      <div class="st-cap">Story saya</div><div class="st-sub">${storySaya.length} item</div></div>`;
+  }
   storyKontak.forEach((g) => {
     const nama = namaAlias(g.user.id, g.user.display_name);
     const last = g.items[g.items.length - 1].created_at;
@@ -1481,6 +1485,8 @@ function tampilStory(i) {
   const segs = Array.from($("vwBars").children);
   segs.forEach((sg, k) => { sg.firstChild.style.width = k < i ? "100%" : "0%"; });
   $("vwWaktu").textContent = waktuStory(item.created_at);
+  const hapusEl = $("vwHapus");
+  if (hapusEl) hapusEl.style.display = (storyPemilik === me.id) ? "block" : "none";
   let isi = "";
   if (item.kind === "teks") {
     isi = `<div class="vw-teks" style="background:linear-gradient(160deg,${item.warna || "#0f86c9"},#111)">${esc(item.teks || "")}</div>`;
@@ -1528,6 +1534,21 @@ function tutupViewer() {
   $("vwBody").innerHTML = "";
   storyAktif = [];
 }
+async function hapusStoryIni() {
+  const item = storyAktif[storyIdx];
+  if (!item) return;
+  if (!confirm("Hapus story ini?")) return;
+  try {
+    const { error } = await sb.from("posel_stories").delete().eq("id", item.id);
+    if (error) throw error;
+    storyAktif.splice(storyIdx, 1);
+    await muatStories();
+    if (!storyAktif.length) { tutupViewer(); return; }
+    if (storyIdx >= storyAktif.length) storyIdx = storyAktif.length - 1;
+    tampilStory(storyIdx);
+  } catch (e) { alert("Gagal hapus: " + (e.message || e)); }
+}
+
 function balasStory() {
   const item = storyAktif[storyIdx];
   if (!item) return;
@@ -2035,7 +2056,7 @@ window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
 window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.kirimMediaBesar = kirimMediaBesar;
 window.bukaMenuChat = bukaMenuChat;
-window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
+window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
 $("btnSimpanKey").onclick = async () => {
   const k = $("inAnonKey").value.trim();
   if (!k) { pesanAuth("Tempel anon key dulu."); return; }
