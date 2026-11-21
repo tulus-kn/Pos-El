@@ -306,6 +306,7 @@ body.chat-aktif { overflow: hidden; height: 100%; }
         <input type="checkbox" id="ckGetarPing" checked> Getar saat menerima Ping
         <button class="btn-bbm" style="margin-top:10px" onclick="tesGetar()">Tes Getar</button>
         <button class="btn-bbm" onclick="mintaIzinNotif()">Izinkan akses notifikasi (lagu dari app lain)</button>
+        <button class="btn-bbm" onclick="pasangApp()">Pasang Pos-El di layar utama</button>
       </label>
       <div style="display:flex;gap:8px;margin-top:14px">
         <button onclick="tesPing()" class="btn ping" style="flex:1">🔔 Tes Ping</button>
@@ -486,6 +487,28 @@ function kirimLampiran(inp){
     return;
   }
   alert('File ini tidak didukung. Pilih foto, video, atau lagu. File: ' + file.name);
+}
+</script>
+<script>
+/* PWA: daftar service worker langsung (tidak tergantung modul Supabase) */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(function () {});
+}
+window.addEventListener("beforeinstallprompt", function (e) {
+  e.preventDefault();
+  window.__poselPrompt = e;
+});
+function pasangApp() {
+  if (window.__poselPrompt) {
+    window.__poselPrompt.prompt();
+    window.__poselPrompt.userChoice.then(function () { window.__poselPrompt = null; });
+    return;
+  }
+  if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) {
+    alert("Pos-El sudah terpasang di layar utama HP ini.");
+    return;
+  }
+  alert("Cara pasang Pos-El:\n\n- Chrome Android: menu tiga titik -> \"Instal aplikasi\" / \"Tambahkan ke layar utama\"\n- Samsung Internet: menu -> \"Tambahkan ke layar utama\"\n- iPhone/Safari: tombol Share -> \"Tambahkan ke Layar Utama\"\n\nKalau menunya belum muncul, tutup tab lalu buka link ini sekali lagi.");
 }
 </script>
 <script type="module">
@@ -1398,9 +1421,6 @@ $("ckGetarPing").onchange = (e) => localStorage.setItem(LS_PING, e.target.checke
 $("inpPassLogin").addEventListener("keydown", (e) => { if (e.key === "Enter") masuk(); });
 $("inpPassReg2").addEventListener("keydown", (e) => { if (e.key === "Enter") daftar(); });
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
-}
 (async () => {
   const ok = await initSupabase();
   if (ok && sb) {
