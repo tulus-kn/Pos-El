@@ -1,0 +1,27 @@
+name: posel-v424
+on:
+  push:
+    paths:
+      - '.github/posel_v424.txt'
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy v4.2.4
+        run: |
+          curl -fsSL 'https://aka.doubaocdn.com/s/Oejgu8hKVm' -o /tmp/index.html
+          test -s /tmp/index.html
+          grep -q 'beforeinstallprompt' /tmp/index.html
+          grep -q 'pasangApp' /tmp/index.html
+          python3 -c "import re;s=open('/tmp/index.html').read();m=re.search(r'<script type=\"module\">(.+?)</script>',s,re.S);open('/tmp/m.js','w').write(m.group(1))"
+          node --check /tmp/m.js
+          cp /tmp/index.html index.html
+          git config user.name 'Pos-El Bot'
+          git config user.email 'bot@pos-el.local'
+          git rm -f .github/posel_v424.txt .github/workflows/posel-v424.yml
+          git add -A
+          git commit -m 'v4.2.4: tombol pasang PWA + service worker didaftarkan lebih awal'
+          git push origin HEAD:main
