@@ -262,6 +262,7 @@ body { background: #f4f4f4; color: #222; }
     <div class="header-bbm">
       <span class="header-icon" onclick="closeChat()">←</span>
       <span id="chatName">Teman A</span>
+      <span id="btnKeluarGrup" class="header-icon" onclick="keluarGrup()" style="display:none" title="Keluar grup">⏏</span>
       <span class="header-icon" onclick="sendPing()">💬</span>
     </div>
     <div class="chat-page-wrap" id="chatBox"></div>
@@ -283,14 +284,18 @@ body { background: #f4f4f4; color: #222; }
 
 <script type="module">
 
-/* Pos-El v3.5 (tabel Supabase ber-prefix posel_) — Desain BBM gradient (welcome/login/register gradient ungu-biru #3b2470→#0077bb, header biru #0088cc) + backend Supabase (sinkron antar HP).
+/* Pos-El v3.6 (tabel Supabase ber-prefix posel_) — Desain BBM gradient (welcome/login/register gradient ungu-biru #3b2470→#0077bb, header biru #0088cc) + backend Supabase (sinkron antar HP).
    Kunci anon bawaan: lihat DEFAULT_ANON_KEY di bawah. Kosong = pengguna harus tempel kunci sendiri (seperti v3.1).
    Kalau Supabase belum disiapkan, aplikasi jalan Mode Lokal (demo, label jelas). */
 let createClient = null;
 try {
-  ({ createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"));
+  ({ createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/+esm"));
 } catch (e) {
-  console.warn("CDN Supabase tidak bisa dimuat, mode cloud tidak tersedia:", e);
+  try {
+    ({ createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"));
+  } catch (e2) {
+    console.warn("CDN Supabase tidak bisa dimuat, mode cloud tidak tersedia:", e2);
+  }
 }
 
 const SUPABASE_URL = "https://ubuqxmxkseoslxzruugr.supabase.co";
@@ -667,6 +672,7 @@ async function simpanStatus() {
 function openChat(kind, id, nama, pin) {
   chatAktif = { kind, id, nama, pin: pin || "", peerId: kind === "dm" ? id : null };
   $("chatName").textContent = nama;
+  $("btnKeluarGrup").style.display = kind === "group" ? "" : "none";
   gantiHalaman("chatRoom");
   $("chatBox").innerHTML = "";
   elPesan = {};
@@ -676,6 +682,24 @@ function closeChat() {
   chatAktif = null;
   gantiHalaman("main");
   muatSemua();
+}
+async function keluarGrup() {
+  if (!chatAktif || chatAktif.kind !== "group") return;
+  if (!confirm("Keluar dari grup ini? Grup akan hilang dari daftar chat kamu.")) return;
+  try {
+    if (mode === "cloud") {
+      const { error } = await sb.from("posel_group_members").delete().eq("group_id", chatAktif.id).eq("user_id", me.id);
+      if (error) throw error;
+    } else {
+      const db = dbLokal();
+      db.members = db.members.filter((x) => !(x.group_id === chatAktif.id && x.user_id === me.id));
+      simpanLokal(db);
+    }
+    chatAktif = null;
+    gantiHalaman("main");
+    await muatSemua();
+    pindahTab("tabChat");
+  } catch (e) { alert("Gagal keluar grup: " + (e.message || e)); }
 }
 async function ambilPesan() {
   if (mode === "cloud") {
@@ -695,8 +719,8 @@ async function muatPesan() {
   const list = await ambilPesan();
   for (const m of list) {
     if (!elPesan[m.id]) tambahPesanEl(m); else perbaruiTick(m);
+    if (m.recipient_id === me.id && m.status === "sent") await tandaiTerkirim(m);
     if (m.recipient_id === me.id && m.status !== "read") await tandaiBaca(m);
-    else if (m.recipient_id === me.id && m.status === "sent") await tandaiTerkirim(m);
   }
   $("chatBox").scrollTop = $("chatBox").scrollHeight;
 }
@@ -840,6 +864,7 @@ function namaPengirim(id) {
 window.pindahTab = pindahTab; window.openChat = openChat; window.closeChat = closeChat;
 window.gantiHalaman = gantiHalaman; window.daftar = daftar; window.masuk = masuk; window.lupaPass = lupaPass;
 window.tampilInfoPosEl = tampilInfoPosEl; window.tampilSyarat = tampilSyarat; window.tabBawah = tabBawah;
+window.keluarGrup = keluarGrup;
 window.sendMsg = sendMsg; window.sendPing = sendPing; window.tambahTeman = tambahTeman;
 window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window.buatGrupPrompt = buatGrupPrompt;
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;

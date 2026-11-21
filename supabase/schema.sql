@@ -1,5 +1,5 @@
 -- ============================================================
--- Pos-El — Skema Supabase (PostgreSQL) v3.5
+-- Pos-El — Skema Supabase (PostgreSQL) v3.6
 -- Cara pakai: buka dashboard Supabase proyek
 -- https://ubuqxmxkseoslxzruugr.supabase.co
 -- lalu SQL Editor → New query → HAPUS isi query lama → tempel
@@ -35,6 +35,17 @@
 --   * posel_group_members hanya bisa ditambah oleh pembuat grup,
 --     dan hanya untuk dirinya sendiri atau kontaknya (sebelumnya
 --     siapa pun bisa self-join grup mana saja).
+--
+-- PERBAIKAN v3.6 (2026-11-21):
+--   * Anggota boleh keluar grup: policy DELETE (user_id = auth.uid()).
+--   * posel_cari_pin dibatasi 15 percobaan / 5 menit per akun
+--     (tabel posel_pin_attempts) supaya PIN tidak bisa dienumerasi.
+--   * Rekursi policy grup diperbaiki. Policy posel_groups dan
+--     posel_group_members saling merujuk sehingga query pada kedua
+--     tabel gagal "infinite recursion detected in policy". Cek
+--     keanggotaan kini lewat fungsi SECURITY DEFINER
+--     posel_is_group_member / posel_is_group_creator; policy pesan
+--     grup memakai helper yang sama.
 -- ============================================================
 
 -- ---------- Tabel profil (1 baris per akun) ----------
@@ -55,19 +66,53 @@ create index if not exists posel_profiles_pin_idx on public.posel_profiles (pin)
 -- Sejak v3.5, tabel posel_profiles TIDAK lagi bisa dibaca semua user:
 -- hanya baris sendiri + kontak. Pencarian PIN (daftar & tambah teman)
 -- lewat fungsi ini yang hanya mengembalikan id + display_name (tanpa PIN).
+-- Catatan percobaan pencarian PIN (dipakai fungsi di bawah, tidak
+-- bisa dibaca/ditulis langsung oleh client).
+create table if not exists public.posel_pin_attempts (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  attempted_at timestamptz not null default now()
+);
+create index if not exists posel_pin_attempts_idx
+  on public.posel_pin_attempts (user_id, attempted_at desc);
+alter table public.posel_pin_attempts enable row level security;
+revoke all on public.posel_pin_attempts from anon, authenticated;
+
 create or replace function public.posel_cari_pin(p_pin text)
 returns table (id uuid, display_name text)
-language sql
+language plpgsql
 security definer
 set search_path = public, pg_temp
 as $fn$
-  select p.id, p.display_name
-  from public.posel_profiles p
-  where p.pin = upper(btrim(p_pin))
-  limit 1;
+declare
+  v_uid uuid := auth.uid();
+  v_count int;
+begin
+  if v_uid is null then
+    raise exception 'Harus login untuk mencari PIN';
+  end if;
+
+  select count(*) into v_count
+  from public.posel_pin_attempts a
+  where a.user_id = v_uid and a.attempted_at > now() - interval '5 minutes';
+
+  if v_count >= 15 then
+    raise exception 'Terlalu banyak percobaan PIN. Tunggu beberapa menit lalu coba lagi.';
+  end if;
+
+  insert into public.posel_pin_attempts (user_id) values (v_uid);
+  delete from public.posel_pin_attempts
+  where user_id = v_uid and attempted_at < now() - interval '1 day';
+
+  return query
+    select p.id, p.display_name
+    from public.posel_profiles p
+    where p.pin = upper(btrim(p_pin))
+    limit 1;
+end;
 $fn$;
 revoke all on function public.posel_cari_pin(text) from public;
 grant execute on function public.posel_cari_pin(text) to authenticated;
+
 
 -- ---------- Tabel kontak / undangan pertemanan ----------
 create table if not exists public.posel_contacts (
@@ -114,6 +159,36 @@ create index if not exists posel_messages_recipient_idx on public.posel_messages
 create index if not exists posel_messages_sender_idx on public.posel_messages (sender_id, created_at);
 create index if not exists posel_messages_group_idx on public.posel_messages (group_id, created_at);
 
+-- ---------- Helper keanggotaan grup (v3.6) ----------
+-- SECURITY DEFINER: membaca tabel langsung tanpa memicu RLS, sehingga
+-- policy groups <-> group_members tidak saling memanggil (rekursi).
+-- Dibuat setelah semua tabel ada supaya body SQL tervalidasi.
+create or replace function public.posel_is_group_creator(p_group uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public, pg_temp
+as $fn$
+  select exists (
+    select 1 from public.posel_groups g
+    where g.id = p_group and g.created_by = auth.uid()
+  );
+$fn$;
+
+create or replace function public.posel_is_group_member(p_group uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public, pg_temp
+as $fn$
+  select exists (
+    select 1 from public.posel_group_members m
+    where m.group_id = p_group and m.user_id = auth.uid()
+  );
+$fn$;
+
 -- ============================================================
 -- Row Level Security
 -- ============================================================
@@ -158,7 +233,7 @@ drop policy if exists "posel_groups_select_member" on public.posel_groups;
 create policy "posel_groups_select_member" on public.posel_groups
   for select to authenticated using (
     created_by = auth.uid()
-    or exists (select 1 from public.posel_group_members m where m.group_id = posel_groups.id and m.user_id = auth.uid())
+    or public.posel_is_group_member(id)
   );
 
 -- Anggota grup: anggota/pembuat boleh membaca; pembuat boleh menambah.
@@ -166,15 +241,12 @@ drop policy if exists "posel_group_members_select" on public.posel_group_members
 create policy "posel_group_members_select" on public.posel_group_members
   for select to authenticated using (
     user_id = auth.uid()
-    or exists (select 1 from public.posel_groups g where g.id = posel_group_members.group_id and g.created_by = auth.uid())
+    or public.posel_is_group_creator(group_id)
   );
 drop policy if exists "posel_group_members_insert" on public.posel_group_members;
 create policy "posel_group_members_insert" on public.posel_group_members
   for insert to authenticated with check (
-    exists (
-      select 1 from public.posel_groups g
-      where g.id = posel_group_members.group_id and g.created_by = auth.uid()
-    )
+    public.posel_is_group_creator(group_id)
     and (
       user_id = auth.uid()
       or exists (
@@ -186,30 +258,34 @@ create policy "posel_group_members_insert" on public.posel_group_members
     )
   );
 
+-- Anggota boleh keluar grup sendiri (v3.6).
+drop policy if exists "posel_group_members_delete_self" on public.posel_group_members;
+create policy "posel_group_members_delete_self" on public.posel_group_members
+  for delete to authenticated using (user_id = auth.uid());
+
 -- Pesan: pengirim & penerima (atau anggota grup) boleh membaca.
 -- Kirim: hanya sebagai diri sendiri. Ubah status: hanya penerima
 -- (atau anggota grup untuk pesan grup).
 drop policy if exists "posel_messages_select_party" on public.posel_messages;
 create policy "posel_messages_select_party" on public.posel_messages
   for select to authenticated using (
-    sender_id = auth.uid()
-    or recipient_id = auth.uid()
-    or (group_id is not null and exists (
-      select 1 from public.posel_group_members m where m.group_id = posel_messages.group_id and m.user_id = auth.uid()))
+    (group_id is null and (sender_id = auth.uid() or recipient_id = auth.uid()))
+    or (group_id is not null and public.posel_is_group_member(group_id))
   );
 drop policy if exists "posel_messages_insert_own" on public.posel_messages;
 create policy "posel_messages_insert_own" on public.posel_messages
-  for insert to authenticated with check (sender_id = auth.uid());
+  for insert to authenticated with check (
+    sender_id = auth.uid()
+    and (group_id is null or public.posel_is_group_member(group_id))
+  );
 drop policy if exists "posel_messages_update_recipient" on public.posel_messages;
 create policy "posel_messages_update_recipient" on public.posel_messages
   for update to authenticated using (
     recipient_id = auth.uid()
-    or (group_id is not null and exists (
-      select 1 from public.posel_group_members m where m.group_id = posel_messages.group_id and m.user_id = auth.uid()))
+    or (group_id is not null and public.posel_is_group_member(group_id))
   ) with check (
     recipient_id = auth.uid()
-    or (group_id is not null and exists (
-      select 1 from public.posel_group_members m where m.group_id = posel_messages.group_id and m.user_id = auth.uid()))
+    or (group_id is not null and public.posel_is_group_member(group_id))
   );
 
 -- ============================================================

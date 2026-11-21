@@ -7,6 +7,29 @@ bunyi + banner merah), grup, broadcast, dan status Kabar.
 
 Live: https://tulus-kn.github.io/Pos-El/
 
+## Perubahan v3.6 (2026-11-21) — Keluar grup, centang D, pin CDN, batas PIN, fix grup
+- **Grup diperbaiki (bug lama).** Policy `posel_groups` dan
+  `posel_group_members` saling merujuk, sehingga query pada kedua tabel
+  gagal dengan `infinite recursion detected in policy` — akibatnya daftar
+  grup selalu kosong dan pembuatan grup tampak gagal. Pengecekan
+  keanggotaan kini lewat fungsi SECURITY DEFINER
+  `posel_is_group_member(group_id)` / `posel_is_group_creator(group_id)`;
+  policy pesan grup memakai helper yang sama.
+- **Keluar grup.** Tombol baru di header chat grup (ikon ⏏) menghapus
+  keanggotaan diri sendiri (`posel_group_members` dapat policy DELETE
+  `user_id = auth.uid()`). Grup hilang dari daftar chat dan pesan grup
+  lama tidak lagi bisa dibaca (RLS pesan grup berbasis keanggotaan).
+- **Centang D tidak lagi dilewati.** Saat chat dibuka, pesan `sent`
+  ditandai `delivered` lebih dulu, baru `read`, jadi urutan ✓ → D → R
+  terekam benar walau pesan masuk ketika aplikasi tertutup.
+- **Versi library Supabase dipin.** `@supabase/supabase-js@2.119.2`
+  (fallback ke `@2` bila CDN menolak versi tersebut).
+- **Batas percobaan PIN.** `posel_cari_pin` maksimal 15 pencarian per 5
+  menit per akun, dicatat di tabel internal `posel_pin_attempts` yang
+  tidak bisa diakses client.
+- **Wajib migrasi:** jalankan ulang `supabase/schema.sql` versi v3.6
+  (aman diulang, tanpa DROP TABLE), lalu deploy ulang `index.html`.
+
 ## Perubahan v3.5 (2026-11-21) — Privasi PIN, join grup, urutan pesan
 - **PIN tidak lagi terbaca semua orang.** Policy `posel_profiles` diganti:
   tiap user hanya bisa membaca baris profilnya sendiri dan profil kontaknya.
