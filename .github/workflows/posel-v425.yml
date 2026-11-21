@@ -1,0 +1,28 @@
+name: posel-v425
+on:
+  push:
+    paths:
+      - '.github/posel_v425.txt'
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy v4.2.5
+        run: |
+          curl -fsSL 'https://aka.doubaocdn.com/s/yFrG8za0BR' -o /tmp/index.html
+          test -s /tmp/index.html
+          grep -q 'modalProfil' /tmp/index.html
+          grep -q 'simpanProfil' /tmp/index.html
+          grep -q 'safe-area-inset-top' /tmp/index.html
+          python3 -c "import re;s=open('/tmp/index.html').read();m=re.search(r'<script type=\"module\">(.+?)</script>',s,re.S);open('/tmp/m.js','w').write(m.group(1))"
+          node --check /tmp/m.js
+          cp /tmp/index.html index.html
+          git config user.name 'Pos-El Bot'
+          git config user.email 'bot@pos-el.local'
+          git rm -f .github/posel_v425.txt .github/workflows/posel-v425.yml
+          git add -A
+          git commit -m 'v4.2.5: header aman dari poni/status bar + edit nama & foto profil'
+          git push origin HEAD:main
