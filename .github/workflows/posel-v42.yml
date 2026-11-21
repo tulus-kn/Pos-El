@@ -1,0 +1,28 @@
+name: posel-v42
+on:
+  push:
+    paths:
+      - '.github/posel_v42.txt'
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy v4.2
+        run: |
+          curl -fsSL 'https://aka.doubaocdn.com/s/y9adBeFJCn' -o /tmp/new.html
+          test -s /tmp/new.html
+          grep -q 'kirimMediaBesar' /tmp/new.html
+          grep -q 'now_playing' /tmp/new.html
+          grep -q 'bukaMenuChat' /tmp/new.html
+          python3 -c "import re;s=open('/tmp/new.html').read();m=re.search(r'<script type=\"module\">(.+?)</script>',s,re.S);open('/tmp/m.js','w').write(m.group(1))"
+          node --check /tmp/m.js
+          cp /tmp/new.html index.html
+          git config user.name 'Pos-El Bot'
+          git config user.email 'bot@pos-el.local'
+          git rm -f .github/posel_v42.txt .github/workflows/posel-v42.yml
+          git add -A
+          git commit -m 'v4.2: kirim video/lagu, status sedang memutar, edit & hapus chat, tes getar'
+          git push origin HEAD:main
