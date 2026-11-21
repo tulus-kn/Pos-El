@@ -15,6 +15,9 @@ body { background: #ececec; color: #1a1a1a; }
 #pageChatRoom.active { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
 body.chat-aktif { overflow: hidden; height: 100%; }
 #pageChatRoom .header-bbm { flex: 0 0 auto; }
+.header-title { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
+.header-title #chatName { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-np { display: none; font-size: 11px; color: #d9f2ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #pageChatRoom .chat-page-wrap { min-height: 0; -webkit-overflow-scrolling: touch; }
 #pageChatRoom .chat-input-bar { flex: 0 0 auto; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
 
@@ -141,8 +144,14 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .panel-emoji { display: none; position: absolute; left: 6px; right: 6px; bottom: calc(100% + 6px); background: #fff; border: 1px solid #cfcfcf; border-radius: 8px; padding: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.35); max-height: 172px; overflow-y: auto; z-index: 30; }
 .panel-emoji span { display: inline-block; font-size: 22px; line-height: 1; padding: 6px 7px; cursor: pointer; border-radius: 6px; }
 .panel-emoji span:active { background: #eef7fd; }
+.chat-menu { flex-shrink: 0; padding: 6px 10px; color: #7a7a7a; font-size: 20px; line-height: 1; cursor: pointer; align-self: center; }
+.chat-menu:active { color: #0f86c9; }
 .img-bubble { padding: 3px !important; }
 .img-bubble img { max-width: 100%; border-radius: 4px; display: block; }
+.media-bubble { padding: 4px !important; }
+.media-bubble video { max-width: 100%; max-height: 300px; border-radius: 4px; display: block; background: #000; }
+.media-bubble audio { width: 230px; max-width: 100%; display: block; }
+.media-bubble .media-cap { font-size: 12px; color: #5a5a5a; padding: 4px 6px 2px; }
 .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 60; align-items: center; justify-content: center; padding: 18px; }
 .modal-card { width: 100%; max-width: 360px; max-height: 92vh; overflow-y: auto; background: #f7f7f7; border-radius: 8px; padding: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.45); text-align: left; }
 .modal-card h3 { font-size: 16px; font-weight: 700; color: #0f86c9; margin-bottom: 6px; }
@@ -289,6 +298,7 @@ body.chat-aktif { overflow: hidden; height: 100%; }
       <p style="margin-bottom:8px">Mode: <span id="setMode"></span></p>
       <label style="font-size:13px;display:flex;gap:8px;align-items:center">
         <input type="checkbox" id="ckGetarPing" checked> Getar saat menerima Ping
+        <button class="btn-bbm" style="margin-top:10px" onclick="tesGetar()">Tes Getar</button>
       </label>
       <div style="display:flex;gap:8px;margin-top:14px">
         <button onclick="tesPing()" class="btn ping" style="flex:1">🔔 Tes Ping</button>
@@ -338,17 +348,28 @@ body.chat-aktif { overflow: hidden; height: 100%; }
     </div>
   </div>
 
+  <!-- v4.2: menu chat (edit / hapus) -->
+  <div id="modalChatMenu" class="modal">
+    <div class="modal-card">
+      <h3 id="cmJudul">Chat</h3>
+      <p class="modal-txt">Pilih tindakan untuk chat ini.</p>
+      <button class="btn-bbm" onclick="cmEdit()">Edit chat (ganti nama)</button>
+      <button class="btn-bbm" onclick="cmHapus()">Hapus chat</button>
+      <button class="btn-bbm" onclick="tutupMenuChat()">Batal</button>
+    </div>
+  </div>
+
   <!-- ============= HALAMAN CHAT ROOM ============= -->
   <div id="pageChatRoom" class="page">
     <div class="header-bbm">
       <span class="header-icon" onclick="closeChat()">←</span>
-      <span id="chatName">Teman A</span>
+      <div class="header-title"><span id="chatName">Teman A</span><span id="chatNp" class="chat-np"></span></div>
       <span id="btnKeluarGrup" class="header-icon" onclick="keluarGrup()" style="display:none" title="Keluar grup">⏏</span>
       <span class="header-icon" onclick="sendPing()">💬</span>
     </div>
     <div class="chat-page-wrap" id="chatBox"></div>
     <div class="chat-input-bar">
-      <span class="btn-attach" onclick="pilihFile()" role="button" title="Kirim gambar">📎</span><input type="file" id="inpFile" accept="image/*" style="display:none" onchange="kirimGambar(this)">
+      <span class="btn-attach" onclick="pilihFile()" role="button" title="Kirim gambar">📎</span><input type="file" id="inpFile" accept="image/*,video/*,audio/*" style="display:none" onchange="kirimLampiran(this)">
       <input type="text" placeholder="Masukan pesan..." id="msgInput" onkeydown="if(event.key==='Enter')sendMsg()">
       <span class="btn-emoji" onclick="toggleEmoji()" role="button" title="Emoji">🙂</span><div id="panelEmoji" class="panel-emoji"></div>
       <button class="btn send" onclick="sendMsg()">Kirim</button>
@@ -392,38 +413,61 @@ function sisipEmoji(e){
   var pos = (typeof s === 'number') ? (s + e.length) : i.value.length;
   try { i.setSelectionRange(pos, pos); } catch (err) {}
 }
+function tesGetar(){
+  var pola = [200, 100, 200, 100, 300];
+  var info = [];
+  info.push('Aplikasi: ' + (window.PosElNative ? 'APK Pos-El (native bridge ADA)' : 'browser / APK tanpa bridge'));
+  var punyaVib = '';
+  if (window.PosElNative && typeof window.PosElNative.hasVibrator === 'function') {
+    try { punyaVib = window.PosElNative.hasVibrator() ? 'ya' : 'TIDAK (HP ini tidak punya vibrator)'; } catch (e) { punyaVib = 'error'; }
+    info.push('Vibrator HP: ' + punyaVib);
+  }
+  info.push('navigator.vibrate: ' + (navigator.vibrate ? 'ada' : 'tidak ada'));
+  var jalur = 'tidak ada';
+  try {
+    if (window.PosElNative && typeof window.PosElNative.vibrate === 'function') { window.PosElNative.vibrate(pola.join(',')); jalur = 'native'; }
+    else if (navigator.vibrate) { navigator.vibrate(pola); jalur = 'navigator.vibrate'; }
+  } catch (e) { info.push('Error: ' + e); }
+  info.push('Coba getar lewat: ' + jalur);
+  alert(info.join('\n'));
+}
 function pilihFile(){
   var f = document.getElementById('inpFile');
   if (!f) return;
   f.value = '';
   f.click();
 }
-function kirimGambar(inp){
+function kirimLampiran(inp){
   var file = inp.files && inp.files[0];
   if (!file) return;
-  if (!/^image\//.test(file.type)) {
-    alert('Saat ini hanya gambar yang bisa dikirim. File dipilih: ' + file.name);
-    return;
-  }
   if (typeof window.kirimKeBackend !== 'function') {
     alert('Chat belum siap, buka chat sekali lagi lalu coba.');
     return;
   }
-  var reader = new FileReader();
-  reader.onload = function(){
-    var img = new Image();
-    img.onload = function(){
-      var max = 520, w = img.width, h = img.height;
-      if (Math.max(w, h) > max) { var k = max / Math.max(w, h); w = Math.round(w * k); h = Math.round(h * k); }
-      var c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
-      window.kirimKeBackend('text', '[IMG]' + c.toDataURL('image/jpeg', 0.72));
+  if (/^image\//.test(file.type)) {
+    var reader = new FileReader();
+    reader.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var max = 900, w = img.width, h = img.height;
+        if (Math.max(w, h) > max) { var k = max / Math.max(w, h); w = Math.round(w * k); h = Math.round(h * k); }
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        window.kirimKeBackend('text', '[IMG]' + c.toDataURL('image/jpeg', 0.78));
+      };
+      img.onerror = function(){ alert('Gambar tidak bisa dibaca.'); };
+      img.src = reader.result;
     };
-    img.onerror = function(){ alert('Gambar tidak bisa dibaca.'); };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+    return;
+  }
+  if (/^video\//.test(file.type) || /^audio\//.test(file.type)) {
+    if (typeof window.kirimMediaBesar !== 'function') { alert('Fitur video/lagu belum siap, refresh aplikasinya.'); return; }
+    window.kirimMediaBesar(file);
+    return;
+  }
+  alert('File ini tidak didukung. Pilih foto, video, atau lagu. File: ' + file.name);
 }
 </script>
 <script type="module">
@@ -688,6 +732,7 @@ async function muatSemua() {
       });
       const { data: g } = await sb.from("posel_group_members").select("group_id, posel_groups(id,name)").eq("user_id", me.id);
       grupSaya = (g || []).map((x) => x.posel_groups).filter(Boolean);
+      await muatNowPlaying();
     } else {
       const db = dbLokal();
       kontakSaya = db.contacts.filter((x) => x.owner === me.id && x.status === "accepted")
@@ -892,13 +937,16 @@ async function jawabUndangan(id, terima) {
     await muatSemua();
   } catch (e) { alert("Gagal: " + (e.message || e)); }
 }
-function itemKontak(k, klik) {
+function namaAlias(kunci, asli) { const v = localStorage.getItem("posel_alias_" + kunci); return v || asli; }
+function itemKontak(k, klik, kind, id) {
+  const nm = namaAlias(kind === "dm" ? (id || k.id) : ("g" + (id || "")), k.display_name);
+  const menu = kind ? `<span class="chat-menu" onclick="event.stopPropagation();bukaMenuChat('${kind}','${id}','${esc(nm)}')">⋯</span>` : "";
   return `<div class="chat-list-item" onclick="${klik}">
-    <div class="avatar">${esc(k.display_name.slice(-1).toUpperCase())}</div>
+    <div class="avatar">${esc(nm.slice(-1).toUpperCase())}</div>
     <div class="chat-info">
-      <div class="chat-name">${esc(k.display_name)} ${k.online ? '<span class="ping-bbm"></span>' : '<span class="ping-off"></span>'}</div>
-      <div class="chat-preview">${esc(k.pin)}${k.status_text ? " • " + esc(k.status_text) : ""}</div>
-    </div></div>`;
+      <div class="chat-name">${esc(nm)} ${k.online ? '<span class="ping-bbm"></span>' : '<span class="ping-off"></span>'}</div>
+      <div class="chat-preview">${k.now_playing ? esc(k.now_playing) : esc(k.pin) + (k.status_text ? " • " + esc(k.status_text) : "")}</div>
+    </div>${menu}</div>`;
 }
 function renderKontak() {
   $("daftarUndangan").innerHTML = undangan.length ? undangan.map((u) => `
@@ -916,11 +964,16 @@ function renderKontak() {
 }
 function renderChat() {
   let html = "";
-  kontakSaya.forEach((k) => { html += itemKontak(k, `openChat('dm','${k.id}','${esc(k.display_name)}','${esc(k.pin)}')`); });
+  kontakSaya.forEach((k) => {
+    const nm = namaAlias(k.id, k.display_name);
+    html += itemKontak(k, `openChat('dm','${k.id}','${esc(nm)}','${esc(k.pin)}')`, "dm", k.id);
+  });
   grupSaya.forEach((g) => {
-    html += `<div class="chat-list-item" onclick="openChat('group','${g.id}','👥 ${esc(g.name)}','GRUP')">
+    const nm = namaAlias("g" + g.id, g.name);
+    html += `<div class="chat-list-item" onclick="openChat('group','${g.id}','👥 ${esc(nm)}','GRUP')">
       <div class="avatar">👥</div>
-      <div class="chat-info"><div class="chat-name">👥 ${esc(g.name)}</div><div class="chat-preview">Grup • klik untuk chat</div></div></div>`;
+      <div class="chat-info"><div class="chat-name">👥 ${esc(nm)}</div><div class="chat-preview">Grup • klik untuk chat</div></div>
+      <span class="chat-menu" onclick="event.stopPropagation();bukaMenuChat('group','${g.id}','${esc(nm)}')">⋯</span></div>`;
   });
   $("daftarChat").innerHTML = html || '<div class="kosong">Belum ada chat. Tambah teman pakai PIN di tab Kontak.</div>';
 }
@@ -945,10 +998,63 @@ async function simpanStatus() {
   } catch (e) { alert("Gagal simpan status: " + (e.message || e)); }
 }
 
+/* ---------- Menu chat: edit & hapus (v4.2) ---------- */
+let menuChatData = null;
+function bukaMenuChat(kind, id, nama) {
+  menuChatData = { kind, id, nama };
+  $("cmJudul").textContent = nama || "Chat";
+  $("modalChatMenu").style.display = "flex";
+}
+function tutupMenuChat() { $("modalChatMenu").style.display = "none"; }
+function cmEdit() {
+  const d = menuChatData;
+  if (!d) return;
+  const asli = d.kind === "dm" ? d.nama : d.nama;
+  const baru = prompt("Nama baru untuk chat ini (hanya tersimpan di HP ini):", asli);
+  if (baru === null) return;
+  const bersih = baru.trim().slice(0, 40);
+  const kunci = d.kind === "dm" ? d.id : ("g" + d.id);
+  if (bersih) localStorage.setItem("posel_alias_" + kunci, bersih);
+  else localStorage.removeItem("posel_alias_" + kunci);
+  tutupMenuChat();
+  renderChat();
+  if (chatAktif && chatAktif.id === d.id) $("chatName").textContent = bersih || asli;
+}
+async function cmHapus() {
+  const d = menuChatData;
+  if (!d) return;
+  if (!confirm("Hapus seluruh riwayat chat dengan " + d.nama + "?\nTindakan ini permanen.")) return;
+  try {
+    if (mode === "cloud") {
+      if (d.kind === "dm") {
+        const pair = `and(sender_id.eq.${me.id},recipient_id.eq.${d.id}),and(sender_id.eq.${d.id},recipient_id.eq.${me.id})`;
+        const { error } = await sb.from("posel_messages").delete().or(pair);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from("posel_messages").delete().eq("group_id", d.id);
+        if (error) throw error;
+      }
+    } else {
+      const db = dbLokal();
+      db.messages = db.messages.filter((m) => d.kind === "dm"
+        ? !((m.sender_id === me.id && m.recipient_id === d.id) || (m.sender_id === d.id && m.recipient_id === me.id))
+        : m.group_id !== d.id);
+      simpanLokal(db);
+    }
+    tutupMenuChat();
+    if (chatAktif && chatAktif.id === d.id) { $("chatBox").innerHTML = ""; elPesan = {}; }
+    alert("Riwayat chat dengan " + d.nama + " sudah dihapus.");
+  } catch (e) {
+    alert("Gagal hapus chat: " + (e.message || e) + "\n\nKalau error izin, jalankan SQL v4.2 / cek policy tabel posel_messages.");
+  }
+}
+
 /* ---------- Chat ---------- */
 function openChat(kind, id, nama, pin) {
   chatAktif = { kind, id, nama, pin: pin || "", peerId: kind === "dm" ? id : null };
   $("chatName").textContent = nama;
+  const kPeer = chatAktif.peerId ? kontakSaya.find((x) => x.id === chatAktif.peerId) : null;
+  tampilNowPlayingChat(kPeer ? kPeer.now_playing : "");
   $("btnKeluarGrup").style.display = kind === "group" ? "" : "none";
   gantiHalaman("chatRoom");
   $("chatBox").innerHTML = "";
@@ -1009,12 +1115,43 @@ function tambahPesanEl(m) {
   const tick = m.kind === "ping" ? "" : (m.status === "read" ? "R" : m.status === "delivered" ? "D" : "✓");
   const cls = m.status === "read" ? "status-R" : m.status === "delivered" ? "status-D" : "status-S";
   const isImg = typeof m.body === "string" && m.body.indexOf("[IMG]data:image/") === 0;
+  const isVid = typeof m.body === "string" && m.body.indexOf("[VID]http") === 0;
+  const isAud = typeof m.body === "string" && m.body.indexOf("[AUD]http") === 0;
+  let mediaUrl = "", mediaJudul = "";
+  if (isVid || isAud) {
+    const isi = String(m.body).slice(5);
+    const p = isi.split("|");
+    mediaUrl = p[0];
+    mediaJudul = (p.slice(1).join("|") || "").trim();
+  }
+  const cap = mediaJudul ? `<div class="media-cap">${esc(mediaJudul)}</div>` : "";
+  const stat = `<div class="status ${cls}">${tick} ${jam(m.created_at)}</div>`;
   div.innerHTML = isImg
-    ? `<div class="msg-bubble img-bubble"><img src="${esc(m.body.slice(5))}" alt="Foto"></div><div class="status ${cls}">${tick} ${jam(m.created_at)}</div>`
-    : `<div class="msg-bubble">${esc(m.body)}</div><div class="status ${cls}">${tick} ${jam(m.created_at)}</div>`;
+    ? `<div class="msg-bubble img-bubble"><img src="${esc(m.body.slice(5))}" alt="Foto" loading="lazy"></div>` + stat
+    : isVid
+    ? `<div class="msg-bubble media-bubble"><video src="${esc(mediaUrl)}" data-judul="${esc(mediaJudul)}" controls playsinline preload="metadata"></video>` + cap + `</div>` + stat
+    : isAud
+    ? `<div class="msg-bubble media-bubble"><audio src="${esc(mediaUrl)}" data-judul="${esc(mediaJudul)}" controls preload="metadata"></audio>` + cap + `</div>` + stat
+    : `<div class="msg-bubble">${esc(m.body)}</div>` + stat;
   box.appendChild(div);
   elPesan[m.id] = div;
   box.scrollTop = box.scrollHeight;
+}
+const kotakChatEl = document.getElementById("chatBox");
+if (kotakChatEl) {
+  kotakChatEl.addEventListener("play", (ev) => {
+    const el = ev.target;
+    if (!el || (el.tagName !== "AUDIO" && el.tagName !== "VIDEO")) return;
+    const j = (el.dataset && el.dataset.judul) || (el.tagName === "VIDEO" ? "Video" : "Lagu");
+    kirimNowPlaying((el.tagName === "VIDEO" ? "🎬 " : "🎵 ") + j);
+  }, true);
+  const hentiPutar = (ev) => {
+    const el = ev.target;
+    if (!el || (el.tagName !== "AUDIO" && el.tagName !== "VIDEO")) return;
+    if (el.paused || el.ended) kirimNowPlaying("");
+  };
+  kotakChatEl.addEventListener("pause", hentiPutar, true);
+  kotakChatEl.addEventListener("ended", hentiPutar, true);
 }
 function perbaruiTick(m) {
   const el = elPesan[m.id]; if (!el || m.kind === "ping") return;
@@ -1040,6 +1177,69 @@ function sendMsg() {
 function sendPing() {
   if (!chatAktif) return;
   kirimKeBackend("ping", "🔔 PING!");
+}
+let npTerakhir = null;
+async function kirimNowPlaying(t) {
+  if (mode !== "cloud" || !sb || !me) return;
+  try {
+    await sb.from("posel_profiles").update({ now_playing: t || null, now_playing_at: new Date().toISOString() }).eq("id", me.id);
+  } catch (e) {}
+}
+function tampilNowPlayingChat(t) {
+  const el = $("chatNp");
+  if (!el) return;
+  el.textContent = t || "";
+  el.style.display = t ? "block" : "none";
+}
+async function muatNowPlaying() {
+  if (mode !== "cloud" || !sb || !kontakSaya.length) {
+    if (chatAktif && chatAktif.kind === "dm") tampilNowPlayingChat("");
+    return;
+  }
+  try {
+    const ids = kontakSaya.map((k) => k.id);
+    const { data, error } = await sb.from("posel_profiles").select("id,now_playing,now_playing_at").in("id", ids);
+    if (error) return;
+    (data || []).forEach((p) => {
+      const k = kontakSaya.find((x) => x.id === p.id);
+      if (!k) return;
+      const segar = p.now_playing_at && (Date.now() - new Date(p.now_playing_at).getTime() < 20 * 60 * 1000);
+      k.now_playing = (p.now_playing && segar) ? p.now_playing : "";
+    });
+    if (chatAktif && chatAktif.kind === "dm") {
+      const k = kontakSaya.find((x) => x.id === chatAktif.peerId);
+      tampilNowPlayingChat(k ? k.now_playing : "");
+    }
+  } catch (e) {}
+}
+async function kirimMediaBesar(file) {
+  const isVid = /^video\//.test(file.type);
+  const tag = isVid ? "[VID]" : "[AUD]";
+  const label = isVid ? "video" : "lagu";
+  const maxMB = isVid ? 25 : 15;
+  if (mode !== "cloud" || !sb) { alert("Video/lagu hanya bisa dikirim saat online (mode Supabase)."); return; }
+  if (!chatAktif) { alert("Buka chat dulu."); return; }
+  if (file.size > maxMB * 1024 * 1024) { alert("File terlalu besar. Maksimal " + maxMB + " MB untuk " + label + "."); return; }
+  const namaAsli = file.name || (label + ".bin");
+  const ext = (namaAsli.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "bin";
+  const path = (me && me.id ? me.id : "umum") + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+  const tmp = document.createElement("div");
+  tmp.className = "msg out";
+  tmp.innerHTML = '<div class="msg-bubble">Mengunggah ' + label + "… " + Math.round(file.size / 1024) + ' KB</div>';
+  $("chatBox").appendChild(tmp);
+  $("chatBox").scrollTop = $("chatBox").scrollHeight;
+  try {
+    const { error } = await sb.storage.from("posel-media").upload(path, file, { contentType: file.type || (isVid ? "video/mp4" : "audio/mpeg"), upsert: false });
+    if (error) throw error;
+    const { data } = sb.storage.from("posel-media").getPublicUrl(path);
+    if (!data || !data.publicUrl) throw new Error("URL file tidak didapat.");
+    const judul = (namaAsli.replace(/\.([^.]+)$/, "").replace(/[_]+/g, " ").trim() || (isVid ? "Video" : "Lagu")).slice(0, 60);
+    await kirimKeBackend("text", tag + data.publicUrl + "|" + judul);
+  } catch (e) {
+    alert("Gagal mengunggah " + label + ": " + (e.message || e) + "\n\nPastikan SQL v4.2 (bucket posel-media) sudah dijalankan di Supabase.");
+  } finally {
+    tmp.remove();
+  }
 }
 async function kirimKeBackend(kind, body) {
   const target = chatAktif.kind === "dm"
@@ -1148,7 +1348,8 @@ window.keluarGrup = keluarGrup;
 window.sendMsg = sendMsg; window.sendPing = sendPing; window.tambahTeman = tambahTeman;
 window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window.buatGrupPrompt = buatGrupPrompt;
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
-window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
+window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.kirimMediaBesar = kirimMediaBesar;
+window.bukaMenuChat = bukaMenuChat; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
 $("btnSimpanKey").onclick = async () => {
   const k = $("inAnonKey").value.trim();
   if (!k) { pesanAuth("Tempel anon key dulu."); return; }
