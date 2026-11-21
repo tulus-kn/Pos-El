@@ -5,59 +5,61 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POS-EL</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial, sans-serif}
-body{background:#222;background-image:radial(#333 1px,transparent 1px);background-size:20px 20px;padding:1rem}
-.container{max-width:420px;margin:0 auto;background:#000;border-radius:20px;overflow:hidden;border:3px solid #2563eb;box-shadow:0 0 25px #2563eb44}
-.header{background:linear-gradient(90deg,#1d4ed8,#3b82f6);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;font-weight:bold;font-size:19px}
-.header-pin{font-size:14px;opacity:0.9}
-.subbar{background:#0b1526;color:#cfe3ff;padding:6px 14px;font-size:12px;display:flex;justify-content:space-between}
-.badge-lokal{background:#a60;color:#fff;font-size:11px;padding:1px 8px;border-radius:10px}
-.badge-cloud{background:#080;color:#fff;font-size:11px;padding:1px 8px;border-radius:10px}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial, Helvetica, sans-serif}
+body{background:#c8c8c8;padding:10px 8px}
+.container{max-width:420px;margin:0 auto;background:#fff;border-radius:6px;overflow:hidden;border:1px solid #999;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.header{background:#000;color:#fff;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:bold;font-size:20px;letter-spacing:1px}
+.header-pin{font-size:13px;opacity:.9;font-weight:normal;letter-spacing:0}
+.subbar{background:#f0f0f0;color:#555;padding:6px 14px;font-size:12px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd}
+.badge-lokal{background:#b45309;color:#fff;font-size:11px;padding:1px 8px;border-radius:10px}
+.badge-cloud{background:#2e7d32;color:#fff;font-size:11px;padding:1px 8px;border-radius:10px}
 
-.contact-list{background:#000}
-.contact-item{display:flex;gap:12px;padding:12px 16px;border-bottom:#222 solid 1px;align-items:center;cursor:pointer;transition:0.2s}
-.contact-item:hover{background:#111}
-.avatar{width:46px;height:46px;border-radius:50%;background:#3366cc;color:#fff;display:grid;place-items:center;font-weight:bold;font-size:18px;flex:none}
-.contact-info h3{color:#fff;font-size:16px}
-.contact-info p{color:#888;font-size:13px;margin-top:2px}
-.pin-text{color:#8cf}
+.contact-list{background:#fff}
+.contact-item{display:flex;gap:12px;padding:11px 16px;border-bottom:#e8e8e8 solid 1px;align-items:center;cursor:pointer;transition:0.15s}
+.contact-item:hover{background:#f2f2f2}
+.avatar{width:46px;height:46px;border-radius:50%;background:#4a6fa5;color:#fff;display:grid;place-items:center;font-weight:bold;font-size:18px;flex:none;border:1px solid #3a5a84}
+.contact-info h3{color:#111;font-size:16px}
+.contact-info p{color:#777;font-size:13px;margin-top:2px}
+.pin-text{color:#1565c0}
 
-.chat-screen{display:none;height:580px;background:#111;flex-direction:column}
-.chat-topbar{background:#1d4ed8;color:#fff;padding:12px 16px;display:flex;gap:10px;align-items:center}
-.back-btn{background:#fff2;border:0;color:#fff;padding:4px 9px;border-radius:8px;cursor:pointer}
-.chat-area{flex:1;padding:14px;overflow-y:auto}
-.msg{margin:8px 0;max-width:75%}
+.chat-screen{display:none;height:580px;background:#ededed;flex-direction:column}
+.chat-topbar{background:#000;color:#fff;padding:11px 14px;display:flex;gap:10px;align-items:center}
+.back-btn{background:#333;border:1px solid #555;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer}
+.chat-area{flex:1;padding:14px;overflow-y:auto;background:#ededed}
+.msg{margin:8px 0;max-width:78%}
 .msg.out{margin-left:auto}
-.msg-bubble{padding:9px 12px;border-radius:12px;font-size:14px}
-.msg.in .msg-bubble{background:#333;color:#fff;border-bottom-left-radius:3px}
-.msg.out .msg-bubble{background:#2563eb;color:#fff;border-bottom-right-radius:3px}
-.msg-ping .msg-bubble{background:#7f1d1d !important;border:2px solid #dc2626}
-.status{font-size:11px;color:#777;text-align:right;margin-top:2px}
-.status-R{color:#0f0}.status-D{color:#ff0}.status-S{color:#888}
+.msg-bubble{padding:9px 12px;border-radius:10px;font-size:14px;line-height:1.4}
+.msg.in .msg-bubble{background:#fff;color:#111;border:1px solid #d5d5d5;border-bottom-left-radius:3px}
+.msg.out .msg-bubble{background:#cfe8ff;color:#111;border:1px solid #a8d0f0;border-bottom-right-radius:3px}
+.msg-ping .msg-bubble{background:#b91c1c !important;border:2px solid #dc2626;color:#fff !important}
+.status{font-size:11px;color:#888;text-align:right;margin-top:2px}
+.status-R{color:#1a7d2e}.status-D{color:#1565c0}.status-S{color:#888}
 
-.chat-input-area{display:flex;padding:10px;background:#000;gap:8px}
-#msgInput{flex:1;padding:10px;border-radius:12px;border:0;outline:none}
-.btn{border:0;padding:0 14px;border-radius:12px;font-weight:bold;cursor:pointer;height:40px}
-.send{background:#2563eb;color:#fff}
-.ping{background:#dc2626;color:#fff}
+.chat-input-area{display:flex;padding:10px;background:#fff;gap:8px;border-top:1px solid #ccc}
+#msgInput{flex:1;padding:10px;border-radius:8px;border:1px solid #bbb;outline:none;background:#fff;color:#111}
+.btn{border:0;padding:0 14px;border-radius:8px;font-weight:bold;cursor:pointer;height:40px}
+.send{background:#111;color:#fff}
+.ping{background:#d32f2f;color:#fff}
 
-.tabbar{display:flex;background:#111}
-.tab-btn{flex:1;padding:9px 0;text-align:center;font-size:13px;cursor:pointer;background:#111;color:#ccc;border:0}
-.tab-btn.aktif{background:#1d4ed8;color:#fff}
-.pane{padding:4px 0 10px}
-.pane h4{color:#888;font-size:12px;padding:8px 16px 2px}
+.tabbar{display:flex;background:#e8e8e8;border-bottom:1px solid #ccc}
+.tab-btn{flex:1;padding:10px 0;text-align:center;font-size:13px;cursor:pointer;background:#e8e8e8;color:#333;border:0}
+.tab-btn.aktif{background:#000;color:#fff}
+.pane{padding:4px 0 10px;background:#fff}
+.pane h4{color:#777;font-size:12px;padding:8px 16px 2px}
 .rowbtn{display:flex;gap:8px;padding:10px 16px}
-.rowbtn button{flex:1;background:#1e293b;color:#fff;border:0;padding:9px 0;border-radius:10px;cursor:pointer}
+.rowbtn button{flex:1;background:#efefef;color:#222;border:1px solid #ccc;padding:9px 0;border-radius:8px;cursor:pointer}
 .field{padding:8px 16px}
-.field label{color:#888;font-size:12px;display:block;margin-bottom:4px}
-.field input{width:100%;padding:10px;border-radius:10px;border:1px solid #333;background:#000;color:#fff;outline:none}
-.btn-big{width:100%;padding:11px;border:0;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:6px}
-.btn-blue{background:#2563eb;color:#fff}
-.btn-green{background:#15803d;color:#fff}
-.btn-grey{background:#334155;color:#fff}
-.msg-info{color:#facc15;font-size:12px;padding:6px 16px;min-height:18px}
-.kosong{color:#666;font-size:13px;padding:12px 16px}
-#bannerPing{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:10px 18px;border-radius:12px;box-shadow:0 4px 20px #000;z-index:50;font-weight:bold;display:none}
+.field label{color:#555;font-size:12px;display:block;margin-bottom:4px}
+.field input{width:100%;padding:10px;border-radius:8px;border:1px solid #bbb;background:#fff;color:#111;outline:none}
+.btn-big{width:100%;padding:11px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:6px}
+.btn-blue{background:#111;color:#fff}
+.btn-green{background:#2e7d32;color:#fff}
+.btn-grey{background:#616161;color:#fff}
+.msg-info{color:#b45309;font-size:12px;padding:6px 16px;min-height:18px}
+.kosong{color:#888;font-size:13px;padding:12px 16px}
+#bannerPing{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#d32f2f;color:#fff;padding:10px 18px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:50;font-weight:bold;display:none}
+.ping-bbm{width:12px;height:12px;background-color:#00cc00;border-radius:50%;display:inline-block;animation:pingGetar 1.2s infinite ease-out;vertical-align:middle}
+@keyframes pingGetar{0%{transform:scale(0.8);opacity:1}80%{transform:scale(1.6);opacity:0}100%{transform:scale(0.8);opacity:0}}
 </style>
 </head>
 <body>
@@ -73,9 +75,9 @@ body{background:#222;background-image:radial(#333 1px,transparent 1px);backgroun
 
   <!-- ============ MASUK / DAFTAR ============ -->
   <div id="authPage">
-    <div style="padding:16px;color:#fff">
+    <div style="padding:16px;color:#222">
       <h2 style="font-size:18px;margin-bottom:4px">Pesan Jadul ala BBM</h2>
-      <p style="color:#888;font-size:13px;margin-bottom:10px">Daftar hanya pakai username, nama, dan password. Tanpa email, tanpa nomor HP. Setiap akun dapat PIN 8 karakter.</p>
+      <p style="color:#666;font-size:13px;margin-bottom:10px">Daftar hanya pakai username, nama, dan password. Tanpa email, tanpa nomor HP. Setiap akun dapat PIN 8 karakter.</p>
       <div id="authPesan" class="msg-info" style="padding:0 0 6px"></div>
       <div class="field" style="padding:0 0 8px"><label>Username (3–20 karakter, huruf kecil, angka, titik, _)</label>
         <input id="inUser" placeholder="contoh: andi09"></div>
@@ -85,10 +87,10 @@ body{background:#222;background-image:radial(#333 1px,transparent 1px);backgroun
         <input id="inPass" type="password" placeholder="••••"></div>
       <button id="btnMasuk" class="btn-big btn-blue">Masuk</button>
       <button id="btnDaftar" class="btn-big btn-green">Daftar Akun Baru</button>
-      <details style="margin-top:14px;color:#888;font-size:12px">
-        <summary style="cursor:pointer;color:#7dd3fc">⚙️ Pengaturan Supabase (untuk sinkron antar HP)</summary>
-        <p style="margin-top:8px">Supabase URL sudah diisi. Tempel <b>anon public key</b> dari dashboard Supabase kamu (Settings → API) di bawah ini. Kunci ini tersimpan hanya di HP ini.</p>
-        <input id="inAnonKey" style="width:100%;padding:10px;border-radius:10px;border:1px solid #333;background:#000;color:#fff;margin-top:8px" placeholder="eyJhbGciOi… (anon key)">
+      <details style="margin-top:14px;color:#666;font-size:12px">
+        <summary style="cursor:pointer;color:#1565c0">⚙️ Pengaturan Supabase (untuk sinkron antar HP)</summary>
+        <p style="margin-top:8px">Supabase URL sudah diisi. Kalau kunci sudah ditanam di aplikasi, kamu tidak perlu mengisi apa-apa. Kalau belum, tempel <b>anon public key</b> dari dashboard Supabase kamu (Settings → API) di bawah ini. Kunci yang ditempel tersimpan hanya di HP ini dan menggantikan kunci bawaan.</p>
+        <input id="inAnonKey" style="width:100%;padding:10px;border-radius:8px;border:1px solid #bbb;background:#fff;color:#111;margin-top:8px" placeholder="eyJhbGciOi… (anon key)">
         <button id="btnSimpanKey" class="btn-big btn-grey">Simpan Kunci</button>
         <p style="margin-top:8px">Belum ada tabel di Supabase? Jalankan file <b>supabase/schema.sql</b> dari repo ini di SQL Editor, dan matikan <b>Confirm email</b> di Authentication → Settings. Kalau tidak diisi, aplikasi jalan dalam <b>Mode Lokal</b> (demo, hanya di HP ini).</p>
         <button id="btnModeLokal" class="btn-big" style="background:#92600a;color:#fff">Coba Mode Lokal (demo)</button>
@@ -137,7 +139,7 @@ body{background:#222;background-image:radial(#333 1px,transparent 1px);backgroun
       <div id="daftarKabar"></div>
     </div>
 
-    <div id="tabSetting" class="pane" style="display:none;padding:14px 16px;color:#fff">
+    <div id="tabSetting" class="pane" style="display:none;padding:14px 16px;color:#222">
       <p style="margin-bottom:8px">Nama: <b id="setNama"></b></p>
       <p style="margin-bottom:8px">Username: <b id="setUser"></b></p>
       <p style="margin-bottom:8px">PIN saya: <b id="setPin" class="pin-text" style="font-size:17px"></b>
@@ -178,7 +180,8 @@ body{background:#222;background-image:radial(#333 1px,transparent 1px);backgroun
   <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQAtk8N2QDp+ffx96r6vT3d29vbP//8HAA==" type="audio/wav">
 </audio>
 <script type="module">
-/* Pos-El v3.1 (tabel Supabase ber-prefix posel_) — tampilan refactor terbaru + backend Supabase (sinkron antar HP).
+/* Pos-El v3.2 (tabel Supabase ber-prefix posel_) — UI ala BBM klasik + backend Supabase (sinkron antar HP).
+   Kunci anon bawaan: lihat DEFAULT_ANON_KEY di bawah. Kosong = pengguna harus tempel kunci sendiri (seperti v3.1).
    Kalau Supabase belum disiapkan, aplikasi jalan Mode Lokal (demo, label jelas). */
 let createClient = null;
 try {
@@ -188,6 +191,24 @@ try {
 }
 
 const SUPABASE_URL = "https://ubuqxmxkseoslxzruugr.supabase.co";
+// ============================================================
+// PENANAMAN ANON KEY — ISI DI SINI (baris ini saja)
+//   const DEFAULT_ANON_KEY = "sb_publishable_...";
+// Format: string anon PUBLIC key dari Supabase (Settings -> API ->
+// "Publishable key", diawali sb_publishable_ atau eyJhbGciOi...).
+// JANGAN isi dengan "Secret key" (sb_secret_...) — itu kunci rahasia
+// dan TIDAK BOLEH masuk ke kode aplikasi.
+// Kalau dibiarkan "" (kosong), aplikasi tetap minta pengguna
+// menempel kunci sendiri di Pengaturan Supabase (perilaku v3.1).
+// Kunci yang ditempel pengguna (localStorage) selalu menang
+// (override) atas kunci bawaan ini.
+// ============================================================
+const DEFAULT_ANON_KEY = "sb_publishable_B1ULvoanz9aKSadMN6-C9w_B6wgclF7"; // <-- TEMPEL ANON PUBLIC KEY DI ANTARA TANDA KUTIP INI
+function getAnonKey() {
+  const dariHp = (localStorage.getItem(LS_KEY) || "").trim();
+  if (dariHp) return dariHp;
+  return (typeof DEFAULT_ANON_KEY === "string" ? DEFAULT_ANON_KEY.trim() : "");
+}
 const LS_KEY = "posel.anonkey";
 const LS_LOCAL = "posel.localdb";
 const LS_PING = "posel.pingvibrate";
@@ -255,7 +276,7 @@ async function hashPass(p) {
 
 /* ---------- Inisialisasi koneksi ---------- */
 async function initSupabase() {
-  const key = (localStorage.getItem(LS_KEY) || "").trim();
+  const key = getAnonKey();
   if (!key) { mode = "none"; setBadge(); return false; }
   if (!createClient) {
     mode = "none"; setBadge();
@@ -449,7 +470,7 @@ async function jawabUndangan(id, terima) {
 function itemKontak(k, klik) {
   return `<div class="contact-item" onclick="${klik}">
     <div class="avatar">${esc(k.display_name.slice(-1).toUpperCase())}</div>
-    <div class="contact-info"><h3>${esc(k.display_name)} <span style="color:#0f0;font-size:12px">${k.online ? "●" : ""}</span></h3>
+    <div class="contact-info"><h3>${esc(k.display_name)} ${k.online ? '<span class="ping-bbm"></span>' : ""}</h3>
     <p>${esc(k.pin)}${k.status_text ? " • " + esc(k.status_text) : ""}</p></div></div>`;
 }
 function renderKontak() {

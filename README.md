@@ -7,6 +7,25 @@ bunyi + banner merah), grup, broadcast, dan status Kabar.
 
 Live: https://tulus-kn.github.io/Pos-El/
 
+## Perubahan v3.2 (2026-11-21) — UI ala BBM klasik + kunci bisa ditanam
+- Tampilan dirombak jadi gaya BlackBerry Messenger klasik: header hitam,
+  latar putih/abu-abu muda, avatar bulat, bubble pesan masuk putih/abu-abu,
+  bubble pesan sendiri biru muda, tab Chat/Kontak/Kabar/Saya dengan tab aktif
+  hitam, tombol PING! merah mencolok, centang ✓ → D → R tetap jelas.
+  Halaman login/daftar juga dirapikan dengan gaya yang sama.
+  Logika tidak berubah: auth, PIN, chat, Ping, grup, broadcast, Kabar,
+  online indicator, dan tabel `posel_*` tetap sama seperti v3.1.
+- **Penanaman anon key (supaya orang lain tidak perlu tempel kunci):**
+  di `index.html`, cari `const DEFAULT_ANON_KEY = "";` (di dekat
+  `SUPABASE_URL`, sekitar baris 204) lalu isi di antara tanda kutip dengan
+  **anon public key** dari Supabase (Settings → API → Publishable key,
+  diawali `sb_publishable_` atau `eyJhbGciOi...`). JANGAN isi dengan
+  Secret key (`sb_secret_...`). Kunci yang ditempel pengguna di Pengaturan
+  Supabase (localStorage) selalu menang atas kunci bawaan ini. Kalau
+  `DEFAULT_ANON_KEY` dibiarkan `""`, aplikasi tetap minta tempel kunci
+  seperti v3.1. Setelah diisi, deploy ulang `index.html` (commit + push
+  ke `main`, tunggu GitHub Pages) dan rebuild APK Pos-El.
+
 ## Cara menyambungkan ke Supabase (supaya sinkron antar HP)
 
 Backend yang dipakai: Supabase proyek
