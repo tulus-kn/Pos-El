@@ -602,7 +602,11 @@ async function daftar() {
     }
     const kodeRc = buatKodePemulihan();
     const rcHash = await sha256Hex(normKode(kodeRc));
-    const { error: e2 } = await sb.from("posel_profiles").insert({ id: user.id, username: f.username, display_name: f.nama, pin, rc_hash: rcHash });
+    let { error: e2 } = await sb.from("posel_profiles").insert({ id: user.id, username: f.username, display_name: f.nama, pin, rc_hash: rcHash });
+    if (e2 && /rc_hash/i.test(e2.message || "")) {
+      const r2 = await sb.from("posel_profiles").insert({ id: user.id, username: f.username, display_name: f.nama, pin });
+      e2 = r2.error;
+    }
     if (e2) throw e2;
     me = { id: user.id, username: f.username, display_name: f.nama, pin };
     tampilKodePemulihan(kodeRc, masukAplikasi);
