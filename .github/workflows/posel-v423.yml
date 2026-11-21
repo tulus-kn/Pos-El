@@ -1,0 +1,35 @@
+name: posel-v423
+on:
+  push:
+    paths:
+      - '.github/posel_v423.txt'
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy v4.2.3 (PWA)
+        run: |
+          curl -fsSL 'https://aka.doubaocdn.com/s/XEDfoTxVyn' -o /tmp/index.html
+          curl -fsSL 'https://aka.doubaocdn.com/s/YqdY3G8ewe' -o /tmp/manifest.json
+          curl -fsSL 'https://aka.doubaocdn.com/s/9QVEB6y8pQ' -o /tmp/sw.js
+          curl -fsSL 'https://aka.doubaocdn.com/s/8V9uShcH47' -o /tmp/icon-192.png
+          curl -fsSL 'https://aka.doubaocdn.com/s/znKA8jCfLu' -o /tmp/icon-512.png
+          test -s /tmp/index.html
+          grep -q 'manifest.json' /tmp/index.html
+          grep -q 'serviceWorker' /tmp/index.html
+          python3 -c "import json;json.load(open('/tmp/manifest.json'))"
+          node --check /tmp/sw.js
+          cp /tmp/index.html index.html
+          cp /tmp/manifest.json manifest.json
+          cp /tmp/sw.js sw.js
+          cp /tmp/icon-192.png icon-192.png
+          cp /tmp/icon-512.png icon-512.png
+          git config user.name 'Pos-El Bot'
+          git config user.email 'bot@pos-el.local'
+          git rm -f .github/posel_v423.txt .github/workflows/posel-v423.yml
+          git add -A
+          git commit -m 'v4.2.3: jadikan PWA (pasang dari browser tanpa peringatan Play Protect)'
+          git push origin HEAD:main
