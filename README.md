@@ -7,6 +7,25 @@ bunyi + banner merah), grup, broadcast, dan status Kabar.
 
 Live: https://tulus-kn.github.io/Pos-El/
 
+## Perubahan v3.5 (2026-11-21) — Privasi PIN, join grup, urutan pesan
+- **PIN tidak lagi terbaca semua orang.** Policy `posel_profiles` diganti:
+  tiap user hanya bisa membaca baris profilnya sendiri dan profil kontaknya.
+  Pencarian akun lewat PIN kini memakai fungsi `posel_cari_pin(p_pin)`
+  (SECURITY DEFINER) yang hanya mengembalikan `id` + `display_name`, tanpa
+  membocorkan PIN siapa pun.
+- **Tidak bisa lagi self-join grup.** `posel_group_members` hanya bisa
+  ditambah oleh pembuat grup, dan hanya untuk dirinya atau kontak yang
+  sudah `accepted`. Sebelumnya siapa pun yang tahu `group_id` bisa ikut
+  grup mana saja lalu membaca pesan grupnya.
+- **Pesan terbaru tidak lagi hilang.** `ambilPesan()` sekarang mengambil
+  100 pesan **terbaru** (`order created_at desc limit 100`, lalu di-reverse
+  untuk tampilan) — versi lama mengambil 100 pesan tertua sehingga chat
+  baru tidak pernah muncul setelah lewat 100 pesan.
+- **Wajib migrasi:** jalankan ulang `supabase/schema.sql` versi v3.5 di
+  SQL Editor (aman diulang, tanpa DROP TABLE), lalu deploy ulang
+  `index.html`. Tanpa migrasi, daftar & tambah teman akan menampilkan
+  "Pencarian PIN gagal … jalankan ulang schema.sql versi v3.5".
+
 ## Perubahan v3.4 (2026-11-21) — Desain BBM gradient + ikon baru
 - Tampilan dirombak total mengikuti desain kiriman user: halaman Welcome / Login /
   Daftar dengan gradient ungu `#3b2470` → biru `#0077bb`, logo Pos-El baru

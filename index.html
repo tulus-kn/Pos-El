@@ -283,7 +283,7 @@ body { background: #f4f4f4; color: #222; }
 
 <script type="module">
 
-/* Pos-El v3.4 (tabel Supabase ber-prefix posel_) — Desain BBM gradient (welcome/login/register gradient ungu-biru #3b2470→#0077bb, header biru #0088cc) + backend Supabase (sinkron antar HP).
+/* Pos-El v3.5 (tabel Supabase ber-prefix posel_) — Desain BBM gradient (welcome/login/register gradient ungu-biru #3b2470→#0077bb, header biru #0088cc) + backend Supabase (sinkron antar HP).
    Kunci anon bawaan: lihat DEFAULT_ANON_KEY di bawah. Kosong = pengguna harus tempel kunci sendiri (seperti v3.1).
    Kalau Supabase belum disiapkan, aplikasi jalan Mode Lokal (demo, label jelas). */
 let createClient = null;
@@ -443,8 +443,9 @@ async function daftar() {
     }
     let pin = acakPin();
     for (let i = 0; i < 5; i++) {
-      const cek = await sb.from("posel_profiles").select("id").eq("pin", pin).limit(1);
-      if (!cek.data || cek.data.length === 0) break;
+      const { data: cek, error: errCek } = await sb.rpc("posel_cari_pin", { p_pin: pin });
+      if (errCek) throw new Error("Cek PIN gagal (" + errCek.message + "). Jalankan ulang supabase/schema.sql versi v3.5.");
+      if (!cek || cek.length === 0) break;
       pin = acakPin();
     }
     const { error: e2 } = await sb.from("posel_profiles").insert({ id: user.id, username: f.username, display_name: f.nama, pin });
@@ -573,7 +574,9 @@ async function tambahTeman() {
   if (pin === me.pin) { out.textContent = "Itu PIN kamu sendiri."; return; }
   try {
     if (mode === "cloud") {
-      const { data: t } = await sb.from("posel_profiles").select("id,display_name").eq("pin", pin).single();
+      const { data: rows, error: errPin } = await sb.rpc("posel_cari_pin", { p_pin: pin });
+      if (errPin) throw new Error("Pencarian PIN gagal (" + errPin.message + "). Jalankan ulang supabase/schema.sql versi v3.5.");
+      const t = rows && rows[0];
       if (!t) { out.textContent = "PIN tidak ditemukan."; return; }
       const { error } = await sb.from("posel_contacts").insert({ requester_id: me.id, addressee_id: t.id, status: "pending" });
       if (error) throw error;
@@ -676,11 +679,11 @@ function closeChat() {
 }
 async function ambilPesan() {
   if (mode === "cloud") {
-    let q = sb.from("posel_messages").select("*").order("created_at", { ascending: true }).limit(100);
+    let q = sb.from("posel_messages").select("*").order("created_at", { ascending: false }).limit(100);
     if (chatAktif.kind === "dm") q = q.or(`and(sender_id.eq.${me.id},recipient_id.eq.${chatAktif.peerId}),and(sender_id.eq.${chatAktif.peerId},recipient_id.eq.${me.id})`);
     else q = q.eq("group_id", chatAktif.id);
     const { data } = await q;
-    return data || [];
+    return (data || []).slice().reverse();
   }
   const db = dbLokal();
   return db.messages.filter((m) => chatAktif.kind === "dm"

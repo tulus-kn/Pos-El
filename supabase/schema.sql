@@ -1,5 +1,5 @@
 -- ============================================================
--- Pos-El — Skema Supabase (PostgreSQL) v3.1
+-- Pos-El — Skema Supabase (PostgreSQL) v3.5
 -- Cara pakai: buka dashboard Supabase proyek
 -- https://ubuqxmxkseoslxzruugr.supabase.co
 -- lalu SQL Editor → New query → HAPUS isi query lama → tempel
@@ -27,6 +27,14 @@
 --       jadi email konfirmasi tidak akan pernah sampai).
 --   2. Settings → API → salin "anon public key", tempel di
 --      aplikasi Pos-El → Pengaturan Supabase.
+--
+-- PERBAIKAN v3.5 (2026-11-21):
+--   * posel_profiles hanya bisa dibaca baris sendiri + kontak
+--     (sebelumnya semua user bisa membaca PIN semua orang).
+--     Pencarian PIN dialihkan ke fungsi posel_cari_pin(p_pin).
+--   * posel_group_members hanya bisa ditambah oleh pembuat grup,
+--     dan hanya untuk dirinya sendiri atau kontaknya (sebelumnya
+--     siapa pun bisa self-join grup mana saja).
 -- ============================================================
 
 -- ---------- Tabel profil (1 baris per akun) ----------
@@ -42,6 +50,24 @@ create table if not exists public.posel_profiles (
   constraint posel_profiles_pin_chk check (pin ~ '^[0-9A-F]{8}$')
 );
 create index if not exists posel_profiles_pin_idx on public.posel_profiles (pin);
+
+-- ---------- RPC cari akun lewat PIN (v3.5) ----------
+-- Sejak v3.5, tabel posel_profiles TIDAK lagi bisa dibaca semua user:
+-- hanya baris sendiri + kontak. Pencarian PIN (daftar & tambah teman)
+-- lewat fungsi ini yang hanya mengembalikan id + display_name (tanpa PIN).
+create or replace function public.posel_cari_pin(p_pin text)
+returns table (id uuid, display_name text)
+language sql
+security definer
+set search_path = public, pg_temp
+as $fn$
+  select p.id, p.display_name
+  from public.posel_profiles p
+  where p.pin = upper(btrim(p_pin))
+  limit 1;
+$fn$;
+revoke all on function public.posel_cari_pin(text) from public;
+grant execute on function public.posel_cari_pin(text) to authenticated;
 
 -- ---------- Tabel kontak / undangan pertemanan ----------
 create table if not exists public.posel_contacts (
@@ -97,11 +123,19 @@ alter table public.posel_groups enable row level security;
 alter table public.posel_group_members enable row level security;
 alter table public.posel_messages enable row level security;
 
--- Profil: semua user login boleh membaca profil (perlu untuk cari PIN);
--- hanya boleh tulis barisnya sendiri.
+-- Profil: hanya baris sendiri + profil kontak (v3.5). Pencarian PIN
+-- lewat fungsi posel_cari_pin. Hanya boleh tulis barisnya sendiri.
 drop policy if exists "posel_profiles_select_all" on public.posel_profiles;
-create policy "posel_profiles_select_all" on public.posel_profiles
-  for select to authenticated using (true);
+drop policy if exists "posel_profiles_select_self_or_contact" on public.posel_profiles;
+create policy "posel_profiles_select_self_or_contact" on public.posel_profiles
+  for select to authenticated using (
+    id = auth.uid()
+    or exists (
+      select 1 from public.posel_contacts c
+      where (c.requester_id = auth.uid() and c.addressee_id = posel_profiles.id)
+         or (c.addressee_id = auth.uid() and c.requester_id = posel_profiles.id)
+    )
+  );
 drop policy if exists "posel_profiles_insert_own" on public.posel_profiles;
 create policy "posel_profiles_insert_own" on public.posel_profiles
   for insert to authenticated with check (id = auth.uid());
@@ -137,8 +171,19 @@ create policy "posel_group_members_select" on public.posel_group_members
 drop policy if exists "posel_group_members_insert" on public.posel_group_members;
 create policy "posel_group_members_insert" on public.posel_group_members
   for insert to authenticated with check (
-    user_id = auth.uid()
-    or exists (select 1 from public.posel_groups g where g.id = posel_group_members.group_id and g.created_by = auth.uid())
+    exists (
+      select 1 from public.posel_groups g
+      where g.id = posel_group_members.group_id and g.created_by = auth.uid()
+    )
+    and (
+      user_id = auth.uid()
+      or exists (
+        select 1 from public.posel_contacts c
+        where c.status = 'accepted'
+          and ((c.requester_id = auth.uid() and c.addressee_id = posel_group_members.user_id)
+            or (c.addressee_id = auth.uid() and c.requester_id = posel_group_members.user_id))
+      )
+    )
   );
 
 -- Pesan: pengirim & penerima (atau anggota grup) boleh membaca.
