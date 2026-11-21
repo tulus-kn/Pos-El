@@ -3,7 +3,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - '.github/posel_patch_v35.py'
+      - '.github/posel_trigger.txt'
 permissions:
   contents: write
 jobs:
@@ -19,7 +19,7 @@ jobs:
           git config user.name "Pos-El Bot"
           git config user.email "posel-bot@users.noreply.github.com"
           python3 .github/posel_patch_v35.py
-          rm -f .github/posel_patch_v35.py .github/workflows/posel-patch.yml
+          rm -f .github/posel_patch_v35.py .github/posel_trigger.txt .github/workflows/posel-patch.yml
           git add -A
           git commit -m "Pos-El v3.5: privasi PIN, cegah join grup sembarang, urutan pesan"
           git push origin HEAD:main
