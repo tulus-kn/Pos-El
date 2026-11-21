@@ -1,0 +1,33 @@
+name: Pos-El Icon v3.8
+on:
+  push:
+    paths:
+      - '.github/posel_ui38.txt'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch
+        run: |
+          curl -fsSL https://aka.doubaocdn.com/s/F6jyOVI0yG -o /tmp/p.py
+          python3 /tmp/p.py
+          python3 - <<'PY'
+          import re
+          s = open('index.html').read()
+          m = re.search(r'<script type="module">(.*?)</script>', s, re.S)
+          open('/tmp/m.js','w').write(m.group(1))
+          PY
+          node --check /tmp/m.js
+      - name: Commit
+        run: |
+          git config user.name "Pos-El Bot"
+          git config user.email "bot@pos-el.local"
+          rm -f .github/posel_ui38.txt .github/workflows/posel-ui38.yml
+          git add -A
+          git commit -m "UI v3.8: ikon transparan, tanpa kotak putih logo"
+          git push origin HEAD:main
