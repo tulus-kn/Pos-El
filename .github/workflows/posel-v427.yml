@@ -1,0 +1,26 @@
+name: posel-v427
+on:
+  push:
+    paths: ['.github/posel_v427.txt']
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch new html
+        run: |
+          curl -fsSL "https://aka.doubaocdn.com/s/HeTksMe86B" -o new.html
+          md5sum new.html
+          grep -q 'gagalFoto' new.html
+          cp new.html index.html
+      - name: commit and cleanup
+        run: |
+          git config user.name posel-bot
+          git config user.email bot@posel.local
+          git add index.html
+          git commit -m "v4.2.7: simpan nama walau unggah foto gagal"
+          git rm -q .github/workflows/posel-v427.yml .github/posel_v427.txt || true
+          git commit -m "chore: cleanup v4.2.7 workflow"
+          git push
