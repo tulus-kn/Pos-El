@@ -1150,14 +1150,20 @@ async function simpanProfil() {
   if (!nama) { pesan("Nama tidak boleh kosong."); return; }
   let avatar = me.avatar_url || "";
   try {
+    let gagalFoto = "";
     if (fotoProfilBaru) {
       if (mode === "cloud" && sb) {
-        const blob = await (await fetch(fotoProfilBaru)).blob();
-        const path = "avatar/" + me.id + ".jpg";
-        const { error: eUp } = await sb.storage.from("posel-media").upload(path, blob, { contentType: "image/jpeg", upsert: true });
-        if (eUp) throw eUp;
-        const { data } = sb.storage.from("posel-media").getPublicUrl(path);
-        avatar = data.publicUrl + "?v=" + Date.now();
+        try {
+          const blob = await (await fetch(fotoProfilBaru)).blob();
+          const path = "avatar/" + me.id + ".jpg";
+          const { error: eUp } = await sb.storage.from("posel-media").upload(path, blob, { contentType: "image/jpeg", upsert: true });
+          if (eUp) throw eUp;
+          const { data } = sb.storage.from("posel-media").getPublicUrl(path);
+          avatar = data.publicUrl + "?v=" + Date.now();
+        } catch (eFoto) {
+          gagalFoto = eFoto.message || String(eFoto);
+          avatar = me.avatar_url || "";
+        }
       } else {
         avatar = fotoProfilBaru;
       }
@@ -1184,7 +1190,8 @@ async function simpanProfil() {
     $("setNama").textContent = nama;
     tutupProfil();
     renderChat();
-    alert("Profil tersimpan.");
+    if (gagalFoto) alert("Nama tersimpan. Foto gagal diunggah: " + gagalFoto + "\n\nJalankan SQL izin Storage (v4.2.7) lalu coba foto lagi.");
+    else alert("Profil tersimpan.");
   } catch (e) {
     pesan("Gagal simpan: " + (e.message || e) + " (pastikan SQL v4.3 & bucket posel-media sudah ada).");
   }
