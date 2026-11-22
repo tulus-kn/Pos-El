@@ -163,6 +163,8 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .avatar.avatar-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .chat-info { flex: 1; min-width: 0; }
 .chat-name { font-size: 16.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; color: #141414; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unread { background: #e5453f; color: #fff; font-size: 12px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; margin-left: 8px; flex: none; }
+.chat-preview.kosong-pesan { color: #9a9a9a; font-style: italic; }
 .chat-preview { color: #6d6d6d; font-size: 13px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fab-plus { position: fixed; bottom: calc(88px + max(0px, env(safe-area-inset-bottom))); right: calc(50% - min(50%, 215px) + 16px); width: 52px; height: 52px; background: linear-gradient(180deg, #4bb6e8, #0f86c9); border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 3px 10px rgba(0,0,0,.28); cursor: pointer; z-index: 12; }
 .rowbtn { display: flex; gap: 8px; padding: 11px 13px; background: #fff; border-bottom: 1px solid #e4e4e4; }
@@ -791,7 +793,9 @@ let sb = null;
 let mode = "none"; // "cloud" | "local" | "none"
 let me = null;
 let kontakSaya = [], undangan = [], grupSaya = [];
-let chatAktif = null; // {kind:'dm'|'group', id, nama, pin, peerId}
+let chatAktif = null;
+let pesanAkhir = {};
+let belumBaca = {}; // {kind:'dm'|'group', id, nama, pin, peerId}
 let elPesan = {};
 let timerPoll = null;
 const audioPingMixkit = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3");
@@ -1126,6 +1130,7 @@ async function muatSemua() {
       const { data: g } = await sb.from("posel_group_members").select("group_id, posel_groups(id,name)").eq("user_id", me.id);
       grupSaya = (g || []).map((x) => x.posel_groups).filter(Boolean);
       await muatNowPlaying();
+      await muatPesanRingkas();
     } else {
       const db = dbLokal();
       kontakSaya = db.contacts.filter((x) => x.owner === me.id && x.status === "accepted")
@@ -1136,6 +1141,7 @@ async function muatSemua() {
       grupSaya = db.members.filter((x) => x.user_id === me.id).map((x) => db.groups.find((g) => g.id === x.group_id)).filter(Boolean);
     }
   } catch (e) { console.warn("muatSemua gagal", e); }
+  if (mode !== "cloud") muatPesanRingkasLokal();
   renderKontak(); renderChat(); renderKabar(); muatStories();
 }
 function pindahTab(id) {
@@ -1416,12 +1422,70 @@ function itemKontak(k, klik, kind, id, samarkan) {
   const av = k.avatar_url
     ? `<div class="avatar avatar-img"><img src="${esc(k.avatar_url)}" alt=""></div>`
     : `<div class="avatar">${esc(nm.slice(-1).toUpperCase())}</div>`;
+  const kunci = kind === "dm" ? "d:" + (id || k.id) : "";
+  const ringkas = kunci ? ringkasPesan(kunci) : null;
+  const isiPreview = kunci
+    ? `<div class="chat-preview${ringkas.kosong ? " kosong-pesan" : ""}">${esc(ringkas.teks)}</div>`
+    : `<div class="chat-preview">${pinTampil}${k.status_text ? " • " + esc(k.status_text) : ""}</div>`;
   return `<div class="chat-list-item" onclick="${klik}">
     ${av}
     <div class="chat-info">
       <div class="chat-name">${esc(nm)} ${k.online ? '<span class="ping-bbm"></span>' : '<span class="ping-off"></span>'}</div>
-      <div class="chat-preview">${k.now_playing ? esc(k.now_playing) : pinTampil + (k.status_text ? " • " + esc(k.status_text) : "")}</div>
-    </div>${menu}</div>`;
+      ${isiPreview}
+    </div>${kunci ? lencana(kunci) : ""}${menu}</div>`;
+}
+async function muatPesanRingkas() {
+  pesanAkhir = {}; belumBaca = {};
+  try {
+    const kol = "id,sender_id,recipient_id,group_id,kind,body,status,created_at";
+    let r = await sb.from("posel_messages").select(kol)
+      .or("sender_id.eq." + me.id + ",recipient_id.eq." + me.id)
+      .order("created_at", { ascending: false }).limit(100);
+    (r.data || []).forEach(function (m) {
+      const k = m.group_id ? "g:" + m.group_id : "d:" + (m.sender_id === me.id ? m.recipient_id : m.sender_id);
+      if (!pesanAkhir[k]) pesanAkhir[k] = m;
+      if (!m.group_id && m.recipient_id === me.id && m.status !== "read") belumBaca[k] = (belumBaca[k] || 0) + 1;
+    });
+    if (grupSaya.length) {
+      let r2 = await sb.from("posel_messages").select(kol)
+        .in("group_id", grupSaya.map((g) => g.id))
+        .order("created_at", { ascending: false }).limit(100);
+      (r2.data || []).forEach(function (m) {
+        const k = "g:" + m.group_id;
+        if (!pesanAkhir[k]) pesanAkhir[k] = m;
+      });
+    }
+  } catch (e) {}
+  (grupSaya || []).forEach(function (g) {
+    const lokal = Number(localStorage.getItem("posel.unread.g:" + g.id) || 0);
+    if (lokal > 0) belumBaca["g:" + g.id] = Math.max(belumBaca["g:" + g.id] || 0, lokal);
+  });
+}
+function muatPesanRingkasLokal() {
+  pesanAkhir = {}; belumBaca = {};
+  try {
+    const db = dbLokal();
+    (db.messages || []).forEach(function (m) {
+      const k = m.group_id ? "g:" + m.group_id : "d:" + (m.sender_id === me.id ? m.recipient_id : m.sender_id);
+      if (!pesanAkhir[k] || (m.created_at || "") > (pesanAkhir[k].created_at || "")) pesanAkhir[k] = m;
+      if (!m.group_id && m.recipient_id === me.id && m.status !== "read") belumBaca[k] = (belumBaca[k] || 0) + 1;
+    });
+  } catch (e) {}
+}
+function ringkasPesan(kunci) {
+  const m = pesanAkhir[kunci];
+  if (!m) return { teks: "Belum ada pesan", kosong: true };
+  let t = m.body || "";
+  if (m.kind === "ping") t = "🔔 PING";
+  else if (m.kind === "foto") t = "📷 Foto";
+  else if (m.kind === "video") t = "🎬 Video";
+  else if (m.kind === "suara") t = "🎤 Pesan suara";
+  else if (m.kind === "musik") t = "🎵 Musik";
+  return { teks: (m.sender_id === me.id ? "Kamu: " : "") + t, kosong: false };
+}
+function lencana(kunci) {
+  const n = Number(belumBaca[kunci] || 0);
+  return n > 0 ? '<span class="unread">' + (n > 99 ? "99+" : n) + "</span>" : "";
 }
 function renderKontak() {
   $("daftarUndangan").innerHTML = undangan.length ? undangan.map((u) => `
@@ -1450,9 +1514,11 @@ function renderChat() {
   grupSaya.forEach((g) => {
     const nm = namaAlias("g" + g.id, g.name);
     if (q && !nm.toLowerCase().includes(q)) return;
-    html += `<div class="chat-list-item" onclick="openChat('group','${g.id}','👥 ${esc(nm)}','GRUP')">
+    const rg = ringkasPesan("g:" + g.id);
+    html += `<div class="chat-list-item" onclick="openChat('group','${g.id}','👥 ${esc(nm)}')">
       <div class="avatar">👥</div>
-      <div class="chat-info"><div class="chat-name">👥 ${esc(nm)}</div><div class="chat-preview">Grup • klik untuk chat</div></div>
+      <div class="chat-info"><div class="chat-name">👥 ${esc(nm)}</div><div class="chat-preview${rg.kosong ? " kosong-pesan" : ""}">${esc(rg.teks)}</div></div>
+      ${lencana("g:" + g.id)}
       <span class="chat-menu" onclick="event.stopPropagation();bukaMenuChat('group','${g.id}','${esc(nm)}')">⋯</span></div>`;
   });
   $("daftarChat").innerHTML = html || '<div class="kosong">' + (q ? "Tidak ada chat yang cocok." : "Belum ada chat. Tambah teman pakai PIN di menu Kontak.") + '</div>';
@@ -2032,7 +2098,9 @@ async function cmHapus() {
 
 /* ---------- Chat ---------- */
 function openChat(kind, id, nama) {
-  chatAktif = { kind, id, nama: nama || "", peerId: kind === "dm" ? id : null };
+  chatAktif = { kind, id, nama: (nama || "").replace(/^👥\s*/, ""), peerId: kind === "dm" ? id : null };
+  try { localStorage.removeItem("posel.unread.g:" + id); delete belumBaca["g:" + id]; } catch (e) {}
+  renderChat();
   $("chatName").textContent = nama;
   const kPeer = chatAktif.peerId ? kontakSaya.find((x) => x.id === chatAktif.peerId) : null;
   tampilNowPlayingChat(kPeer ? kPeer.now_playing : "");
@@ -2324,6 +2392,19 @@ function langgananRealtime() {
       const untukSaya = m.recipient_id === me.id || (m.group_id && grupSaya.some((g) => g.id === m.group_id));
       if (!untukSaya || m.sender_id === me.id) return;
       if (m.kind !== "ping") bunyi("pesan");
+      const kunciPesan = m.group_id ? "g:" + m.group_id : "d:" + (m.sender_id === me.id ? m.recipient_id : m.sender_id);
+      pesanAkhir[kunciPesan] = m;
+      const sedangDibuka = chatAktif && ((chatAktif.kind === "dm" && m.sender_id === chatAktif.peerId) || (chatAktif.kind === "group" && m.group_id === chatAktif.id));
+      if (!sedangDibuka) {
+        if (m.group_id) {
+          const n = Number(localStorage.getItem("posel.unread.g:" + m.group_id) || 0) + 1;
+          localStorage.setItem("posel.unread.g:" + m.group_id, String(n));
+          belumBaca[kunciPesan] = n;
+        } else {
+          belumBaca[kunciPesan] = Number(belumBaca[kunciPesan] || 0) + 1;
+        }
+        renderChat();
+      }
       if (m.status === "sent") await tandaiTerkirim(m);
       if (chatAktif && ((chatAktif.kind === "dm" && m.sender_id === chatAktif.peerId) || (chatAktif.kind === "group" && m.group_id === chatAktif.id))) {
         tambahPesanEl(m);
