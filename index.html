@@ -289,9 +289,9 @@ body.chat-aktif { overflow: hidden; height: 100%; }
     </div>
     <details class="pengaturan-auth">
       <summary>⚙️ Pengaturan Supabase (untuk sinkron antar HP)</summary>
-      <p>Supabase URL sudah diisi dan kunci anon sudah ditanam di aplikasi, jadi kamu tidak perlu mengisi apa-apa.</p>
-      <input id="inAnonKey" placeholder="eyJhbGciOi… (anon key)" hidden>
-      <button id="btnSimpanKey" class="btn-bbm" hidden>Simpan Kunci</button>
+      <p>Supabase URL sudah diisi dan kunci anon sudah ditanam di aplikasi, jadi kamu tidak perlu mengisi apa-apa. Kalau mau mengganti kunci, tempel <b>anon public key</b> dari dashboard Supabase kamu (Settings → API) di bawah ini. Kunci yang ditempel tersimpan hanya di HP ini dan menggantikan kunci bawaan.</p>
+      <input id="inAnonKey" placeholder="eyJhbGciOi… (anon key)">
+      <button id="btnSimpanKey" class="btn-bbm">Simpan Kunci</button>
       <p>Belum ada tabel di Supabase? Jalankan file <b>supabase/schema.sql</b> dari repo ini di SQL Editor, dan matikan <b>Confirm email</b> di Authentication → Settings. Kalau tidak diisi, aplikasi jalan dalam <b>Mode Lokal</b> (demo, hanya di HP ini).</p>
       <button id="btnModeLokal" class="btn-bbm" style="background:#92600a;border-color:#92600a">Coba Mode Lokal (demo)</button>
     </details>
@@ -380,13 +380,34 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 
     <!-- Tab Saya -->
     <div id="tabSetting" class="pane" style="display:none;padding:14px 16px;color:#222">
-      <p style="margin-bottom:8px">Nama: <b id="setNama"></b></p>
-      <p style="margin-bottom:8px">Username: <b id="setUser"></b></p>
-      <p style="margin-bottom:8px">PIN saya: <b id="setPin" class="pin-text" style="font-size:17px"></b>
-        <button onclick="salinPin()" class="btn" style="background:#555555;color:#fff;height:30px;font-size:12px">Salin PIN</button></p>
-      <p style="margin-bottom:8px">Kode pemulihan: <button onclick="kodeBaruAkun()" class="btn" style="background:#0f86c9;color:#fff;height:30px;font-size:12px">Buat kode baru</button></p>
-      <p style="margin-bottom:8px">Mode: <span id="setMode"></span></p>
-      <button class="btn-bbm" style="margin-top:6px" onclick="bukaProfil()">Ganti nama &amp; foto profil</button>
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
+        <div id="pfWrap" style="width:64px;height:64px;border-radius:50%;overflow:hidden;background:#d9d9d9;display:grid;place-items:center;flex-shrink:0">
+          <img id="pfPrev" alt="" style="width:100%;height:100%;object-fit:cover;display:none">
+          <span id="pfHuruf" style="font-size:22px;font-weight:700;color:#fff">?</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div id="pfNamaLihat" style="font-size:18px;font-weight:700"></div>
+          <div id="pfInfoLihat" style="font-size:12.5px;color:#777;margin-top:3px"></div>
+        </div>
+        <button onclick="pfModeEdit()" style="background:#0f86c9;color:#fff;border:0;border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:600">Ubah</button>
+      </div>
+      <div id="pfLihat">
+        <button onclick="salinPin()" class="btn" style="background:#555555;color:#fff;height:34px;font-size:12.5px">Salin PIN</button>
+        <p style="margin:10px 0 0;font-size:13px">Kode pemulihan: <button onclick="kodeBaruAkun()" class="btn" style="background:#0f86c9;color:#fff;height:30px;font-size:12px">Buat kode baru</button></p>
+        <p style="margin:8px 0 0;font-size:13px">Mode: <span id="setMode"></span></p>
+      </div>
+      <div id="pfEdit" style="display:none;background:#f7f7f7;border:1px solid #e2e2e2;border-radius:12px;padding:12px;margin:4px 0 10px">
+        <button class="btn-bbm" style="margin:0" onclick="document.getElementById('pfFoto').click()">Pilih foto profil</button>
+        <input type="file" id="pfFoto" accept="image/*" style="display:none">
+        <label class="label">Nama tampilan</label>
+        <input id="pfNama" placeholder="Nama kamu" maxlength="40">
+        <div id="pfPesan" class="msg-auth"></div>
+        <div class="modal-row" style="margin-top:10px">
+          <button class="btn-bbm" onclick="pfModeLihat()">Batal</button>
+          <button class="btn-bbm" onclick="simpanProfil()">Simpan</button>
+        </div>
+      </div>
+      <p style="display:none">Nama: <b id="setNama"></b> Username: <b id="setUser"></b> PIN: <b id="setPin"></b></p>
       <label style="font-size:13px;display:flex;gap:8px;align-items:center;margin-top:10px">
         <input type="checkbox" id="ckGetarPing" checked> Getar saat menerima Ping
       </label>
@@ -463,36 +484,6 @@ body.chat-aktif { overflow: hidden; height: 100%; }
       <button class="btn-bbm" onclick="cmEdit()">Edit chat (ganti nama)</button>
       <button class="btn-bbm" onclick="cmHapus()">Hapus chat</button>
       <button class="btn-bbm" onclick="tutupMenuChat()">Batal</button>
-    </div>
-  </div>
-
-  <!-- v4.3: edit profil (nama + foto) -->
-  <div id="modalProfil" class="modal">
-    <div class="modal-card">
-      <h3 style="display:flex;justify-content:space-between;align-items:center">Profil saya
-        <span onclick="tutupProfil()" style="cursor:pointer;color:#999;font-size:20px;line-height:1">✕</span></h3>
-      <div style="display:flex;justify-content:center;margin:10px 0 4px">
-        <div id="pfWrap" style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:#d9d9d9;display:grid;place-items:center">
-          <img id="pfPrev" alt="" style="width:100%;height:100%;object-fit:cover;display:none">
-          <span id="pfHuruf" style="font-size:26px;font-weight:700;color:#fff">?</span>
-        </div>
-      </div>
-      <div id="pfLihat">
-        <p style="text-align:center;font-size:18px;font-weight:700;margin:10px 0 2px" id="pfNamaLihat">—</p>
-        <p style="text-align:center;color:#777;font-size:12.5px;margin:0" id="pfInfoLihat">@— • PIN —</p>
-        <button class="btn-bbm" style="margin-top:16px" onclick="pfModeEdit()">Edit nama &amp; foto</button>
-      </div>
-      <div id="pfEdit" style="display:none">
-        <button class="btn-bbm" style="margin-top:6px" onclick="document.getElementById('pfFoto').click()">Pilih foto profil</button>
-        <input type="file" id="pfFoto" accept="image/*" style="display:none">
-        <label class="label">Nama tampilan</label>
-        <input id="pfNama" placeholder="Nama kamu" maxlength="40">
-        <div id="pfPesan" class="msg-auth"></div>
-        <div class="modal-row">
-          <button class="btn-bbm" onclick="pfModeLihat()">Batal</button>
-          <button class="btn-bbm" onclick="simpanProfil()">Simpan</button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -927,6 +918,7 @@ async function keluarAkun() {
 async function masukAplikasi() {
   gantiHalaman("main");
   $("setNama").textContent = me.display_name;
+  profilLabel(); tampilPreviewProfil(me.avatar_url || "", me.display_name);
   $("setUser").textContent = me.username;
   $("setPin").textContent = me.pin;
   $("setMode").textContent = mode === "cloud" ? "Cloud Supabase (sinkron antar HP)" : "Lokal (demo, hanya HP ini)";
@@ -994,7 +986,7 @@ function drawerKe(aksi) {
   tutupDrawer();
   if (aksi === "keluar") { keluarAkun(); return; }
   if (aksi === "chat") { if (chatAktif) closeChat(); gantiHalaman("main"); pindahTab("tabChat"); return; }
-  if (aksi === "profil") { gantiHalaman("main"); pindahTab("tabSetting"); bukaProfil(); return; }
+  if (aksi === "profil") { gantiHalaman("main"); pindahTab("tabSetting"); if (window.bukaProfil) bukaProfil(); return; }
   if (aksi === "grup") { gantiHalaman("main"); pindahTab("tabChat"); buatGrupPrompt(); return; }
   if (aksi === "kontak") { gantiHalaman("main"); pindahTab("tabKontak"); return; }
   if (aksi === "umpan") { gantiHalaman("main"); pindahTab("tabKabar"); return; }
@@ -1723,7 +1715,12 @@ function pfModeEdit() {
   $("pfPesan").textContent = "";
   $("pfLihat").style.display = "none";
   $("pfEdit").style.display = "block";
-  setTimeout(() => { const n = $("pfNama"); if (n) n.focus(); }, 60);
+  setTimeout(() => {
+    const box = $("pfEdit");
+    if (box) box.scrollIntoView({ behavior: "smooth", block: "center" });
+    const n = $("pfNama");
+    if (n) n.focus();
+  }, 80);
 }
 function bukaProfil() {
   if (!me) return;
@@ -1732,9 +1729,8 @@ function bukaProfil() {
   $("pfPesan").textContent = "";
   $("pfFoto").value = "";
   pfModeLihat();
-  $("modalProfil").style.display = "flex";
 }
-function tutupProfil() { $("modalProfil").style.display = "none"; }
+function tutupProfil() { pfModeLihat(); }
 function kompresFoto(file) {
   return new Promise((resolve, reject) => {
     const fr = new FileReader();
@@ -1798,9 +1794,10 @@ async function simpanProfil() {
     me.display_name = nama;
     me.avatar_url = avatar;
     $("setNama").textContent = nama;
-    tutupProfil();
     renderChat();
     pfModeLihat();
+    profilLabel();
+    tampilPreviewProfil(me.avatar_url || "", me.display_name);
     if (gagalFoto) alert("Nama tersimpan. Foto gagal diunggah: " + gagalFoto);
     else toastPosel("Profil tersimpan");
   } catch (e) {
