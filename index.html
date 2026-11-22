@@ -414,6 +414,20 @@ body.chat-aktif { overflow: hidden; height: 100%; }
       <label style="font-size:13px;display:flex;gap:8px;align-items:center;margin-top:8px">
         <input type="checkbox" id="ckPingLatar"> Ping tetap masuk walau aplikasi ditutup (APK)
       </label>
+      <label style="font-size:13px;display:flex;gap:8px;align-items:center;margin-top:8px">
+        <input type="checkbox" id="ckSuaraPing" checked> Nada saat menerima Ping
+      </label>
+      <label style="font-size:13px;display:flex;gap:8px;align-items:center;margin-top:8px">
+        <input type="checkbox" id="ckSuaraPesan" checked> Nada saat pesan masuk
+      </label>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px">
+        <span>Nada:</span>
+        <select id="selNada" style="flex:1;padding:8px;border-radius:8px;border:1px solid #ccc">
+          <option value="bbm">BBM legend (default)</option>
+          <option value="nokia">Nokia legend</option>
+        </select>
+        <button class="btn" style="background:#0f86c9;color:#fff;height:32px;font-size:12px" onclick="tesNada()">Tes</button>
+      </div>
       <button class="btn-bbm" style="margin-top:10px" onclick="tesGetar()">Tes Getar</button>
       <button class="btn-bbm" onclick="mintaIzinNotif()">Izinkan akses notifikasi (lagu dari app lain)</button>
       <button class="btn-bbm" onclick="pasangApp()">Pasang Pos-El di layar utama</button>
@@ -751,9 +765,57 @@ function getarPing() {
   } catch (e) {}
   try { if (navigator.vibrate) navigator.vibrate(pola); } catch (e) {}
 }
-function putarPing() {
-  try { audioPingMixkit.currentTime = 0; audioPingMixkit.play().catch(() => { const a = $("suaraPing"); a.currentTime = 0; a.play().catch(() => {}); }); } catch {}
+const LS_SUARA_PING = "posel.suara.ping";
+const LS_SUARA_PESAN = "posel.suara.pesan";
+const LS_NADA = "posel.nada";
+let actxNada = null;
+function ctxNada() {
+  try {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return null;
+    if (!actxNada) actxNada = new C();
+    if (actxNada.state === "suspended") actxNada.resume().catch(() => {});
+    return actxNada;
+  } catch (e) { return null; }
 }
+document.addEventListener("pointerdown", function () { ctxNada(); }, true);
+function mainkanNada(pola) {
+  const c = ctxNada();
+  if (!c) return false;
+  const t0 = c.currentTime + 0.02;
+  pola.forEach(function (n) {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sine";
+    o.frequency.value = n[1];
+    g.gain.setValueAtTime(0, t0 + n[0]);
+    g.gain.linearRampToValueAtTime(0.45, t0 + n[0] + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + n[0] + n[2]);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0 + n[0]); o.stop(t0 + n[0] + n[2] + 0.03);
+  });
+  return true;
+}
+function nadaBBM(jenis) {
+  return mainkanNada(jenis === "ping"
+    ? [[0, 880, 0.11], [0.15, 1174, 0.11], [0.32, 880, 0.12], [0.50, 1318, 0.20]]
+    : [[0, 1046, 0.09], [0.13, 1568, 0.14]]);
+}
+function nadaNokia(jenis) {
+  return mainkanNada(jenis === "ping"
+    ? [[0, 659, 0.10], [0.13, 587, 0.10], [0.26, 740, 0.10], [0.39, 740, 0.10], [0.52, 831, 0.10], [0.65, 880, 0.10], [0.80, 1046, 0.22]]
+    : [[0, 880, 0.10], [0.13, 740, 0.10], [0.26, 988, 0.16]]);
+}
+function bunyi(jenis) {
+  const key = jenis === "ping" ? LS_SUARA_PING : LS_SUARA_PESAN;
+  if (localStorage.getItem(key) === "0") return;
+  let ok = false;
+  try { ok = (localStorage.getItem(LS_NADA) === "nokia") ? nadaNokia(jenis) : nadaBBM(jenis); } catch (e) {}
+  if (!ok) {
+    try { audioPingMixkit.currentTime = 0; audioPingMixkit.play().catch(() => { const a = $("suaraPing"); a.currentTime = 0; a.play().catch(() => {}); }); } catch (e) {}
+  }
+}
+function putarPing() { bunyi("ping"); }
+function tesNada() { bunyi("ping"); }
 function tampilPing(dari) {
   $("bannerPingDari").textContent = dari;
   $("bannerPing").style.display = "block";
@@ -2159,6 +2221,7 @@ function langgananRealtime() {
       const m = p.new;
       const untukSaya = m.recipient_id === me.id || (m.group_id && grupSaya.some((g) => g.id === m.group_id));
       if (!untukSaya || m.sender_id === me.id) return;
+      if (m.kind !== "ping") bunyi("pesan");
       if (m.status === "sent") await tandaiTerkirim(m);
       if (chatAktif && ((chatAktif.kind === "dm" && m.sender_id === chatAktif.peerId) || (chatAktif.kind === "group" && m.group_id === chatAktif.id))) {
         tambahPesanEl(m);
@@ -2202,6 +2265,12 @@ $("btnSimpanKey").onclick = async () => {
 };
 $("btnModeLokal").onclick = mulaiModeLokal;
 $("ckGetarPing").onchange = (e) => localStorage.setItem(LS_PING, e.target.checked ? "1" : "0");
+$("ckSuaraPing").checked = localStorage.getItem(LS_SUARA_PING) !== "0";
+$("ckSuaraPing").onchange = (e) => localStorage.setItem(LS_SUARA_PING, e.target.checked ? "1" : "0");
+$("ckSuaraPesan").checked = localStorage.getItem(LS_SUARA_PESAN) !== "0";
+$("ckSuaraPesan").onchange = (e) => localStorage.setItem(LS_SUARA_PESAN, e.target.checked ? "1" : "0");
+$("selNada").value = localStorage.getItem(LS_NADA) || "bbm";
+$("selNada").onchange = (e) => { localStorage.setItem(LS_NADA, e.target.value); bunyi("ping"); };
 $("ckPingLatar").checked = localStorage.getItem(LS_PING_LATAR) === "1";
 $("ckPingLatar").onchange = (e) => aturPingLatar(e.target.checked);
 $("pfFoto").addEventListener("change", async (e) => {
