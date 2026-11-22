@@ -1,0 +1,29 @@
+name: posel-v4319
+on:
+  push:
+    paths: ['.github/posel_v4319.txt']
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch
+        run: |
+          curl -fsSL "https://aka.doubaocdn.com/s/ECIf2xNFkw" -o new.html
+          curl -fsSL "https://aka.doubaocdn.com/s/vWa46M07Sd" -o new.apk
+          md5sum new.html new.apk
+          test $(stat -c%s new.apk) -gt 80000
+          grep -q 'bukaTautan' new.html
+          cp new.html index.html
+          cp new.apk apk/Pos-El.apk
+      - name: commit
+        run: |
+          git config user.name posel-bot
+          git config user.email bot@posel.local
+          git add index.html apk/Pos-El.apk
+          git commit -m "v4.3.19 + APK 2.1: tombol share pakai jembatan native"
+          git rm -q .github/workflows/posel-v4319.yml .github/posel_v4319.txt || true
+          git commit -m "chore: cleanup v4.3.19 workflow"
+          git push
