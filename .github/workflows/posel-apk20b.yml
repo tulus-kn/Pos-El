@@ -1,0 +1,25 @@
+name: posel-apk20b
+on:
+  push:
+    paths: ['.github/posel_apk20b.txt']
+permissions:
+  contents: write
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: replace apk
+        run: |
+          curl -fsSL "https://aka.doubaocdn.com/s/antuoQO4HW" -o /tmp/Pos-El.apk
+          test $(stat -c%s /tmp/Pos-El.apk) -gt 80000
+          cp /tmp/Pos-El.apk apk/Pos-El.apk
+      - name: commit
+        run: |
+          git config user.name posel-bot
+          git config user.email bot@posel.local
+          git add apk/Pos-El.apk
+          git commit -m "APK 2.0: notifikasi dengan cincin hijau + fallback aman"
+          git rm -q .github/workflows/posel-apk20b.yml .github/posel_apk20b.txt || true
+          git commit -m "chore: cleanup apk20b workflow"
+          git push
