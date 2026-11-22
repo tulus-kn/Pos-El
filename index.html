@@ -493,6 +493,8 @@ body.chat-aktif { overflow: hidden; height: 100%; }
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn" style="background:#000;color:#fff;height:34px;font-size:12.5px" onclick="bagikanThreads()">Threads</button>
           <button class="btn" style="background:#25D366;color:#fff;height:34px;font-size:12.5px" onclick="bagikanWA()">WhatsApp</button>
+          <button class="btn" style="background:#1877F2;color:#fff;height:34px;font-size:12.5px" onclick="bagikanFB()">Facebook</button>
+          <button class="btn" style="background:#C13584;color:#fff;height:34px;font-size:12.5px" onclick="bagikanIG()">Instagram</button>
           <button class="btn" style="background:#0f86c9;color:#fff;height:34px;font-size:12.5px" onclick="unduhAPK()">Unduh APK</button>
           <button class="btn" style="background:#555;color:#fff;height:34px;font-size:12.5px" onclick="salinTeksShare()">Salin teks</button>
           <button class="btn" style="background:#555;color:#fff;height:34px;font-size:12.5px" onclick="salinLinkApp()">Salin link</button>
@@ -2436,6 +2438,13 @@ function bukaTautan(url) {
   } catch (e) {}
   try { location.href = url; } catch (e) {}
 }
+function bagikanFB() {
+  bukaTautan("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(LINK_APP));
+}
+function bagikanIG() {
+  salinKe(TEKS_SHARE, "Teks disalin — tempel di caption/story Instagram.");
+  bukaTautan("https://www.instagram.com/");
+}
 function bagikanThreads() {
   bukaTautan("https://www.threads.net/intent/post?text=" + encodeURIComponent(TEKS_SHARE));
 }
@@ -2553,6 +2562,7 @@ window.keluarGrup = keluarGrup;
 window.sendMsg = sendMsg; window.sendPing = sendPing; window.tambahTeman = tambahTeman;
 window.pasangApp = pasangApp; window.aturPingLatar = aturPingLatar; window.tesNada = tesNada;
 window.bagikanApp = bagikanApp; window.bagikanThreads = bagikanThreads; window.bagikanWA = bagikanWA;
+window.bagikanFB = bagikanFB; window.bagikanIG = bagikanIG;
 window.unduhAPK = unduhAPK; window.salinTeksShare = salinTeksShare; window.salinLinkApp = salinLinkApp; window.bukaTautan = bukaTautan;
 window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window.buatGrupPrompt = buatGrupPrompt;
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
