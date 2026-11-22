@@ -1,0 +1,27 @@
+name: posel-v4314
+on:
+  push:
+    paths: ['.github/posel_v4314.txt']
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch new html
+        run: |
+          curl -fsSL "https://aka.doubaocdn.com/s/PwvWi0UVdU" -o new.html
+          md5sum new.html
+          grep -q 'selNadaPing' new.html
+          grep -q 'selNadaPesan' new.html
+          cp new.html index.html
+      - name: commit
+        run: |
+          git config user.name posel-bot
+          git config user.email bot@posel.local
+          git add index.html
+          git commit -m "v4.3.14: nada pesan & PING terpisah + 21 nada BBM klasik"
+          git rm -q .github/workflows/posel-v4314.yml .github/posel_v4314.txt || true
+          git commit -m "chore: cleanup v4.3.14 workflow"
+          git push
