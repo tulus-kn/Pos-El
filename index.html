@@ -2410,6 +2410,12 @@ const LINK_APK = "https://tulus-kn.github.io/Pos-El/apk/Pos-El.apk";
 const TEKS_SHARE = "Saya pindah obrolan ke Pos-El — privasi dulu: tidak minta email, tidak minta nomor HP. Daftar 30 detik, tambah teman pakai PIN 8 karakter, ada PING, grup, dan story.\n\nBuka di HP: " + LINK_APP + "\n\nAndroid (APK): " + LINK_APK + "\n\niPhone: buka di Safari, lalu Add to Home Screen.";
 function bagikanApp() {
   try {
+    if (window.PosElNative && typeof window.PosElNative.bagikan === "function") {
+      window.PosElNative.bagikan(TEKS_SHARE);
+      return;
+    }
+  } catch (e) {}
+  try {
     if (navigator.share) {
       navigator.share({ title: "Pos-El", text: TEKS_SHARE }).catch(function () {});
       return;
@@ -2417,26 +2423,74 @@ function bagikanApp() {
   } catch (e) {}
   salinTeksShare();
 }
+function bukaTautan(url) {
+  try {
+    if (window.PosElNative && typeof window.PosElNative.bukaLink === "function") {
+      window.PosElNative.bukaLink(url);
+      return;
+    }
+  } catch (e) {}
+  try {
+    const w = window.open(url, "_blank");
+    if (w) return;
+  } catch (e) {}
+  try { location.href = url; } catch (e) {}
+}
 function bagikanThreads() {
-  window.open("https://www.threads.net/intent/post?text=" + encodeURIComponent(TEKS_SHARE), "_blank");
+  bukaTautan("https://www.threads.net/intent/post?text=" + encodeURIComponent(TEKS_SHARE));
 }
 function bagikanWA() {
-  window.open("https://wa.me/?text=" + encodeURIComponent(TEKS_SHARE), "_blank");
+  bukaTautan("https://wa.me/?text=" + encodeURIComponent(TEKS_SHARE));
 }
-function unduhAPK() { window.open(LINK_APK, "_blank"); }
-function salinTeksShare() {
-  const t = TEKS_SHARE;
+function unduhAPK() { bukaTautan(LINK_APK); }
+function salinKe(teks, pesan) {
+  function beres() { try { toastPosel(pesan); } catch (e) {} }
   try {
-    navigator.clipboard.writeText(t).then(function () { alert("Teks ajakan disalin. Tempel di chat/status/media sosial."); })
-      .catch(function () { prompt("Salin teks:", t); });
-  } catch (e) { prompt("Salin teks:", t); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(teks).then(beres).catch(function () { paksaSalin(teks, pesan); });
+      return;
+    }
+  } catch (e) {}
+  paksaSalin(teks, pesan);
 }
-function salinLinkApp() {
+function paksaSalin(teks, pesan) {
   try {
-    navigator.clipboard.writeText(LINK_APP).then(function () { alert("Link disalin: " + LINK_APP); })
-      .catch(function () { prompt("Salin link:", LINK_APP); });
-  } catch (e) { prompt("Salin link:", LINK_APP); }
+    const ta = document.createElement("textarea");
+    ta.value = teks;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;top:-1000px;opacity:0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, teks.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    if (ok) { try { toastPosel(pesan); } catch (e) {} return; }
+  } catch (e) {}
+  tampilSalinManual(teks);
 }
+function tampilSalinManual(teks) {
+  let d = document.getElementById("dlgSalin");
+  if (!d) {
+    d = document.createElement("div");
+    d.id = "dlgSalin";
+    d.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:18px";
+    d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:14px;width:100%;max-width:420px">'
+      + '<div style="font-weight:700;color:#0f86c9;margin-bottom:8px">Salin manual</div>'
+      + '<div style="font-size:12px;color:#666;margin-bottom:8px">Tekan lama di kotak, pilih Semua lalu Salin.</div>'
+      + '<textarea id="dlgSalinText" style="width:100%;height:120px;font-size:12px;border:1px solid #ccc;border-radius:8px;padding:8px"></textarea>'
+      + '<div style="text-align:right;margin-top:10px"><button id="dlgSalinTutup" class="btn" style="background:#555;color:#fff;height:32px;font-size:12px">Tutup</button></div>'
+      + '</div>';
+    document.body.appendChild(d);
+    d.querySelector("#dlgSalinTutup").onclick = function () { d.style.display = "none"; };
+  }
+  d.style.display = "flex";
+  const ta = d.querySelector("#dlgSalinText");
+  ta.value = teks;
+  ta.focus();
+  ta.select();
+}
+function salinTeksShare() { salinKe(TEKS_SHARE, "Teks ajakan disalin."); }
+function salinLinkApp() { salinKe(LINK_APP, "Link disalin: " + LINK_APP); }
 function salinPin() { try { navigator.clipboard.writeText(me.pin); alert("PIN disalin: " + me.pin); } catch { prompt("Salin PIN:", me.pin); } }
 function tesPing() { tampilPing(me.display_name + " (tes)"); }
 
@@ -2499,7 +2553,7 @@ window.keluarGrup = keluarGrup;
 window.sendMsg = sendMsg; window.sendPing = sendPing; window.tambahTeman = tambahTeman;
 window.pasangApp = pasangApp; window.aturPingLatar = aturPingLatar; window.tesNada = tesNada;
 window.bagikanApp = bagikanApp; window.bagikanThreads = bagikanThreads; window.bagikanWA = bagikanWA;
-window.unduhAPK = unduhAPK; window.salinTeksShare = salinTeksShare; window.salinLinkApp = salinLinkApp;
+window.unduhAPK = unduhAPK; window.salinTeksShare = salinTeksShare; window.salinLinkApp = salinLinkApp; window.bukaTautan = bukaTautan;
 window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window.buatGrupPrompt = buatGrupPrompt;
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
 window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.kirimMediaBesar = kirimMediaBesar;
