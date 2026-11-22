@@ -2439,7 +2439,10 @@ function bukaTautan(url) {
   try { location.href = url; } catch (e) {}
 }
 function bagikanFB() {
-  bukaTautan("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(LINK_APP));
+  salinKe(TEKS_SHARE, "Teks disalin — tempel di kolom “Apa yang Anda pikirkan?” Facebook.");
+  setTimeout(function () {
+    bukaTautan("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(LINK_APP));
+  }, 600);
 }
 function bagikanIG() {
   salinKe(TEKS_SHARE, "Teks disalin — tempel di caption/story Instagram.");
