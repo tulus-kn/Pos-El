@@ -1243,8 +1243,11 @@ async function jawabUndangan(id, terima) {
   } catch (e) { alert("Gagal: " + (e.message || e)); }
 }
 function namaAlias(kunci, asli) { const v = localStorage.getItem("posel_alias_" + kunci); return v || asli; }
-function itemKontak(k, klik, kind, id) {
+function itemKontak(k, klik, kind, id, samarkan) {
   const nm = namaAlias(kind === "dm" ? (id || k.id) : ("g" + (id || "")), k.display_name);
+  const pinTampil = samarkan
+    ? "PIN ••••" + String(k.pin || "").slice(-4)
+    : "PIN " + esc(k.pin || "");
   const menu = kind ? `<span class="chat-menu" onclick="event.stopPropagation();bukaMenuChat('${kind}','${id}','${esc(nm)}')">⋯</span>` : "";
   const av = k.avatar_url
     ? `<div class="avatar avatar-img"><img src="${esc(k.avatar_url)}" alt=""></div>`
@@ -1253,7 +1256,7 @@ function itemKontak(k, klik, kind, id) {
     ${av}
     <div class="chat-info">
       <div class="chat-name">${esc(nm)} ${k.online ? '<span class="ping-bbm"></span>' : '<span class="ping-off"></span>'}</div>
-      <div class="chat-preview">${k.now_playing ? esc(k.now_playing) : esc(k.pin) + (k.status_text ? " • " + esc(k.status_text) : "")}</div>
+      <div class="chat-preview">${k.now_playing ? esc(k.now_playing) : pinTampil + (k.status_text ? " • " + esc(k.status_text) : "")}</div>
     </div>${menu}</div>`;
 }
 function renderKontak() {
@@ -1267,7 +1270,7 @@ function renderKontak() {
       </div>
     </div>`).join("") : '<div class="kosong">Tidak ada undangan.</div>';
   $("daftarKontak").innerHTML = kontakSaya.length
-    ? kontakSaya.map((k) => itemKontak(k, `openChat('dm','${k.id}','${esc(k.display_name)}','${esc(k.pin)}')`)).join("")
+    ? kontakSaya.map((k) => itemKontak(k, `openChat('dm','${k.id}','${esc(k.display_name)}')`)).join("")
     : '<div class="kosong">Belum ada kontak. Tambah teman pakai PIN di atas.</div>';
 }
 function renderChat() {
@@ -1278,7 +1281,7 @@ function renderChat() {
   kontakSaya.forEach((k) => {
     const nm = namaAlias(k.id, k.display_name);
     if (q && !(nm.toLowerCase().includes(q) || (k.pin || "").toUpperCase() === q.toUpperCase())) return;
-    html += itemKontak(k, `openChat('dm','${k.id}','${esc(nm)}','${esc(k.pin)}')`, "dm", k.id);
+    html += itemKontak(k, `openChat('dm','${k.id}','${esc(nm)}')`, "dm", k.id, true);
   });
   grupSaya.forEach((g) => {
     const nm = namaAlias("g" + g.id, g.name);
@@ -1864,8 +1867,8 @@ async function cmHapus() {
 }
 
 /* ---------- Chat ---------- */
-function openChat(kind, id, nama, pin) {
-  chatAktif = { kind, id, nama, pin: pin || "", peerId: kind === "dm" ? id : null };
+function openChat(kind, id, nama) {
+  chatAktif = { kind, id, nama: nama || "", peerId: kind === "dm" ? id : null };
   $("chatName").textContent = nama;
   const kPeer = chatAktif.peerId ? kontakSaya.find((x) => x.id === chatAktif.peerId) : null;
   tampilNowPlayingChat(kPeer ? kPeer.now_playing : "");
