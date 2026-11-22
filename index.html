@@ -469,21 +469,29 @@ body.chat-aktif { overflow: hidden; height: 100%; }
   <!-- v4.3: edit profil (nama + foto) -->
   <div id="modalProfil" class="modal">
     <div class="modal-card">
-      <h3>Profil saya</h3>
+      <h3 style="display:flex;justify-content:space-between;align-items:center">Profil saya
+        <span onclick="tutupProfil()" style="cursor:pointer;color:#999;font-size:20px;line-height:1">✕</span></h3>
       <div style="display:flex;justify-content:center;margin:10px 0 4px">
         <div id="pfWrap" style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:#d9d9d9;display:grid;place-items:center">
           <img id="pfPrev" alt="" style="width:100%;height:100%;object-fit:cover;display:none">
           <span id="pfHuruf" style="font-size:26px;font-weight:700;color:#fff">?</span>
         </div>
       </div>
-      <button class="btn-bbm" style="margin-top:6px" onclick="document.getElementById('pfFoto').click()">Pilih foto profil</button>
-      <input type="file" id="pfFoto" accept="image/*" style="display:none">
-      <label class="label">Nama tampilan</label>
-      <input id="pfNama" placeholder="Nama kamu" maxlength="40">
-      <div id="pfPesan" class="msg-auth"></div>
-      <div class="modal-row">
-        <button class="btn-bbm" onclick="tutupProfil()">Batal</button>
-        <button class="btn-bbm" onclick="simpanProfil()">Simpan</button>
+      <div id="pfLihat">
+        <p style="text-align:center;font-size:18px;font-weight:700;margin:10px 0 2px" id="pfNamaLihat">—</p>
+        <p style="text-align:center;color:#777;font-size:12.5px;margin:0" id="pfInfoLihat">@— • PIN —</p>
+        <button class="btn-bbm" style="margin-top:16px" onclick="pfModeEdit()">Edit nama &amp; foto</button>
+      </div>
+      <div id="pfEdit" style="display:none">
+        <button class="btn-bbm" style="margin-top:6px" onclick="document.getElementById('pfFoto').click()">Pilih foto profil</button>
+        <input type="file" id="pfFoto" accept="image/*" style="display:none">
+        <label class="label">Nama tampilan</label>
+        <input id="pfNama" placeholder="Nama kamu" maxlength="40">
+        <div id="pfPesan" class="msg-auth"></div>
+        <div class="modal-row">
+          <button class="btn-bbm" onclick="pfModeLihat()">Batal</button>
+          <button class="btn-bbm" onclick="simpanProfil()">Simpan</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1700,13 +1708,30 @@ function tampilPreviewProfil(url, nama) {
   if (url) { img.src = url; img.style.display = "block"; huruf.style.display = "none"; }
   else { img.style.display = "none"; huruf.style.display = "block"; huruf.textContent = avatarHuruf(nama); }
 }
+function profilLabel() {
+  if (!me) return;
+  $("pfNamaLihat").textContent = me.display_name || "—";
+  $("pfInfoLihat").textContent = "@" + (me.username || "—") + "  •  PIN " + (me.pin || "—");
+}
+function pfModeLihat() {
+  $("pfEdit").style.display = "none";
+  $("pfLihat").style.display = "block";
+  profilLabel();
+}
+function pfModeEdit() {
+  $("pfNama").value = me.display_name || "";
+  $("pfPesan").textContent = "";
+  $("pfLihat").style.display = "none";
+  $("pfEdit").style.display = "block";
+  setTimeout(() => { const n = $("pfNama"); if (n) n.focus(); }, 60);
+}
 function bukaProfil() {
   if (!me) return;
   fotoProfilBaru = null;
-  $("pfNama").value = me.display_name || "";
   tampilPreviewProfil(me.avatar_url || "", me.display_name);
   $("pfPesan").textContent = "";
   $("pfFoto").value = "";
+  pfModeLihat();
   $("modalProfil").style.display = "flex";
 }
 function tutupProfil() { $("modalProfil").style.display = "none"; }
@@ -1775,8 +1800,9 @@ async function simpanProfil() {
     $("setNama").textContent = nama;
     tutupProfil();
     renderChat();
-    if (gagalFoto) alert("Nama tersimpan. Foto gagal diunggah: " + gagalFoto + "\n\nJalankan SQL izin Storage (v4.2.7) lalu coba foto lagi.");
-    else alert("Profil tersimpan.");
+    pfModeLihat();
+    if (gagalFoto) alert("Nama tersimpan. Foto gagal diunggah: " + gagalFoto);
+    else toastPosel("Profil tersimpan");
   } catch (e) {
     pesan("Gagal simpan: " + (e.message || e) + " (pastikan SQL v4.3 & bucket posel-media sudah ada).");
   }
@@ -2151,7 +2177,7 @@ window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
 window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.kirimMediaBesar = kirimMediaBesar;
 window.bukaMenuChat = bukaMenuChat;
-window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
+window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.pfModeEdit = pfModeEdit; window.pfModeLihat = pfModeLihat; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
 $("btnSimpanKey").onclick = async () => {
   const k = $("inAnonKey").value.trim();
   if (!k) { pesanAuth("Tempel anon key dulu."); return; }
