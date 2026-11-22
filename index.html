@@ -2140,6 +2140,13 @@ function tesPing() { tampilPing(me.display_name + " (tes)"); }
 /* ---------- Realtime (cloud) ---------- */
 function langgananRealtime() {
   if (!sb) return;
+  try {
+    sb.auth.onAuthStateChange((ev, ses) => {
+      if (ses && window.PosElNative && typeof window.PosElNative.perbaruiToken === "function") {
+        try { window.PosElNative.perbaruiToken(ses.access_token, ses.refresh_token || ""); } catch (e) {}
+      }
+    });
+  } catch (e) {}
   sb.channel("posel-msg")
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "posel_messages" }, async (p) => {
       const m = p.new;
