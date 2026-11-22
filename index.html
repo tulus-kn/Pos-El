@@ -925,7 +925,14 @@ async function masukAplikasi() {
   $("ckGetarPing").checked = localStorage.getItem(LS_PING) !== "0";
   setBadge();
   await muatSemua();
-  if (mode === "cloud") langgananRealtime();
+  if (mode === "cloud") {
+    langgananRealtime();
+    try {
+      await sb.from("posel_messages").update({ status: "delivered" })
+        .eq("recipient_id", me.id).eq("status", "sent");
+      muatSemua(true);
+    } catch (e) {}
+  }
   if (localStorage.getItem(LS_PING_LATAR) === "1") aturPingLatar(true, true);
   clearInterval(timerPoll);
   timerPoll = setInterval(async () => { if (me) await muatSemua(true); }, 5000);
