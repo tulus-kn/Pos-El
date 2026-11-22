@@ -423,8 +423,8 @@ body.chat-aktif { overflow: hidden; height: 100%; }
       <div style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px">
         <span>Nada:</span>
         <select id="selNada" style="flex:1;padding:8px;border-radius:8px;border:1px solid #ccc">
-          <option value="bbm">BBM asli (default)</option>
-          <option value="sintetis">BBM sintetis</option>
+          <option value="sintetis">BBM sintetis (default)</option>
+          <option value="bbm">BBM asli (file)</option>
           <option value="nokia">Nokia legend</option>
         </select>
         <button class="btn" style="background:#0f86c9;color:#fff;height:32px;font-size:12px" onclick="tesNada()">Tes</button>
@@ -816,7 +816,7 @@ function bunyi(jenis) {
   const key = jenis === "ping" ? LS_SUARA_PING : LS_SUARA_PESAN;
   if (localStorage.getItem(key) === "0") return;
   let ok = false;
-  const pilih = localStorage.getItem(LS_NADA) || "bbm";
+  const pilih = localStorage.getItem(LS_NADA) || "sintetis";
   try {
     if (jenis === "ping" && pilih === "bbm") {
       const a = $("suaraBBM");
@@ -2286,7 +2286,7 @@ $("ckSuaraPing").checked = localStorage.getItem(LS_SUARA_PING) !== "0";
 $("ckSuaraPing").onchange = (e) => localStorage.setItem(LS_SUARA_PING, e.target.checked ? "1" : "0");
 $("ckSuaraPesan").checked = localStorage.getItem(LS_SUARA_PESAN) !== "0";
 $("ckSuaraPesan").onchange = (e) => localStorage.setItem(LS_SUARA_PESAN, e.target.checked ? "1" : "0");
-$("selNada").value = localStorage.getItem(LS_NADA) || "bbm";
+$("selNada").value = localStorage.getItem(LS_NADA) || "sintetis";
 $("selNada").onchange = (e) => { localStorage.setItem(LS_NADA, e.target.value); bunyi("ping"); };
 $("ckPingLatar").checked = localStorage.getItem(LS_PING_LATAR) === "1";
 $("ckPingLatar").onchange = (e) => aturPingLatar(e.target.checked);
