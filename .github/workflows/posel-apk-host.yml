@@ -1,0 +1,27 @@
+name: posel-apk-host
+on:
+  push:
+    paths: ['.github/posel_apkhost.txt']
+permissions:
+  contents: write
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: put apk
+        run: |
+          curl -fsSL "https://aka.doubaocdn.com/s/9P8zVsUp7w" -o /tmp/Pos-El.apk
+          ls -l /tmp/Pos-El.apk
+          test $(stat -c%s /tmp/Pos-El.apk) -gt 70000
+          mkdir -p apk
+          cp /tmp/Pos-El.apk apk/Pos-El.apk
+      - name: commit
+        run: |
+          git config user.name posel-bot
+          git config user.email bot@posel.local
+          git add apk/Pos-El.apk
+          git commit -m "host APK 1.9 di /apk/Pos-El.apk"
+          git rm -q .github/workflows/posel-apk-host.yml .github/posel_apkhost.txt || true
+          git commit -m "chore: cleanup apk host workflow"
+          git push
