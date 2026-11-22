@@ -1,0 +1,27 @@
+name: posel-apk20
+on:
+  push:
+    paths: ['.github/posel_apk20.txt']
+permissions:
+  contents: write
+jobs:
+  ship:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch apk
+        run: |
+          curl -fsSL "https://aka.doubaocdn.com/s/9rCui9da0p" -o /tmp/new.apk
+          ls -l /tmp/new.apk
+          test $(stat -c%s /tmp/new.apk) -gt 80000
+          mkdir -p apk
+          cp /tmp/new.apk apk/Pos-El.apk
+      - name: commit
+        run: |
+          git config user.name posel-bot
+          git config user.email bot@posel.local
+          git add apk/Pos-El.apk
+          git commit -m "apk: Pos-El 2.0 (notifikasi Pos-El + titik hijau)"
+          git rm -q .github/workflows/posel-apk20.yml .github/posel_apk20.txt || true
+          git commit -m "chore: cleanup apk20 workflow"
+          git push
