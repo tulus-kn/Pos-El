@@ -289,9 +289,9 @@ body.chat-aktif { overflow: hidden; height: 100%; }
     </div>
     <details class="pengaturan-auth">
       <summary>⚙️ Pengaturan Supabase (untuk sinkron antar HP)</summary>
-      <p>Supabase URL sudah diisi dan kunci anon sudah ditanam di aplikasi, jadi kamu tidak perlu mengisi apa-apa. Kalau mau mengganti kunci, tempel <b>anon public key</b> dari dashboard Supabase kamu (Settings → API) di bawah ini. Kunci yang ditempel tersimpan hanya di HP ini dan menggantikan kunci bawaan.</p>
-      <input id="inAnonKey" placeholder="eyJhbGciOi… (anon key)">
-      <button id="btnSimpanKey" class="btn-bbm">Simpan Kunci</button>
+      <p>Supabase URL sudah diisi dan kunci anon sudah ditanam di aplikasi, jadi kamu tidak perlu mengisi apa-apa.</p>
+      <input id="inAnonKey" placeholder="eyJhbGciOi… (anon key)" hidden>
+      <button id="btnSimpanKey" class="btn-bbm" hidden>Simpan Kunci</button>
       <p>Belum ada tabel di Supabase? Jalankan file <b>supabase/schema.sql</b> dari repo ini di SQL Editor, dan matikan <b>Confirm email</b> di Authentication → Settings. Kalau tidak diisi, aplikasi jalan dalam <b>Mode Lokal</b> (demo, hanya di HP ini).</p>
       <button id="btnModeLokal" class="btn-bbm" style="background:#92600a;border-color:#92600a">Coba Mode Lokal (demo)</button>
     </details>
