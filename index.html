@@ -137,6 +137,10 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .vw-balas { flex: 1; border: 1px solid rgba(255,255,255,.45); border-radius: 22px; padding: 13px 16px; font-size: 13.5px; color: rgba(255,255,255,.9); background: rgba(255,255,255,.1); text-align: left; min-height: 44px; touch-action: manipulation; }
 .vw-hati { font-size: 26px; background: transparent; border: 0; min-width: 48px; min-height: 48px; line-height: 1; touch-action: manipulation; }
 .vw-hati.on { filter: drop-shadow(0 0 6px rgba(255,60,90,.8)); }
+.vw-ketik { flex: 1; display: flex; gap: 8px; align-items: center; }
+.vw-input { flex: 1; border: 1px solid rgba(255,255,255,.5); border-radius: 20px; padding: 11px 14px; font-size: 13.5px; background: rgba(255,255,255,.12); color: #fff; outline: none; }
+.vw-input::placeholder { color: rgba(255,255,255,.6); }
+.vw-kirim { border: 0; border-radius: 18px; padding: 10px 16px; font-size: 13px; font-weight: 700; background: #0f86c9; color: #fff; }
 
 /* ========== DRAWER TELEGRAM STYLE (v4.3) ========== */
 .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; display: none; }
@@ -656,7 +660,11 @@ body.chat-aktif { overflow: hidden; height: 100%; }
     <div class="vw-tap kanan" onclick="storyNext()"></div>
   </div>
   <div class="vw-bawah">
-    <button type="button" class="vw-balas" id="vwBalas" onclick="balasStory()">💬 Balas story…</button>
+    <button type="button" class="vw-balas" id="vwBalas" onclick="mulaiBalasStory()">💬 Balas story…</button>
+    <div class="vw-ketik" id="vwKetik" style="display:none">
+      <input id="vwInput" class="vw-input" placeholder="Tulis balasan…" onkeydown="if(event.key==='Enter'){event.preventDefault();kirimBalasStory();}">
+      <button type="button" class="vw-kirim" id="vwKirim" onclick="kirimBalasStory()">Kirim</button>
+    </div>
     <button type="button" class="vw-hati" id="vwHati" onclick="sukaStory()">🤍</button>
   </div>
 </div>
@@ -1986,6 +1994,7 @@ function tampilStory(i) {
   $("vwWaktu").textContent = waktuStory(item.created_at);
   const hapusEl = $("vwHapus");
   if (hapusEl) hapusEl.style.display = (storyPemilik === me.id) ? "block" : "none";
+  tutupKetikStory();
   const hatiEl = $("vwHati");
   if (hatiEl) {
     hatiEl.style.display = (storyPemilik === me.id) ? "none" : "";
@@ -2055,6 +2064,45 @@ async function hapusStoryIni() {
   } catch (e) { alert("Gagal hapus: " + (e.message || e)); }
 }
 
+function mulaiBalasStory() {
+  const item = storyAktif[storyIdx];
+  if (!item) return;
+  if (item.user_id === me.id) { toastPosel("Ini story kamu sendiri."); return; }
+  const b = $("vwBalas"), k = $("vwKetik"), i = $("vwInput");
+  if (b) b.style.display = "none";
+  if (k) k.style.display = "flex";
+  if (i) { i.value = ""; setTimeout(() => i.focus(), 60); }
+}
+function tutupKetikStory() {
+  const b = $("vwBalas"), k = $("vwKetik"), i = $("vwInput");
+  if (k) k.style.display = "none";
+  if (b) b.style.display = "";
+  if (i) { i.value = ""; i.blur(); }
+}
+async function kirimBalasStory() {
+  const item = storyAktif[storyIdx];
+  if (!item) return;
+  const i = $("vwInput");
+  const teks = (i && i.value || "").trim();
+  if (!teks) { toastPosel("Tulis balasan dulu."); return; }
+  if (item.user_id === me.id) { toastPosel("Ini story kamu sendiri."); return; }
+  const btn = $("vwKirim");
+  if (btn) btn.disabled = true;
+  try {
+    if (mode === "cloud" && sb) {
+      const { error } = await sb.from("posel_messages").insert({ sender_id: me.id, recipient_id: item.user_id, group_id: null, kind: "text", body: teks, is_broadcast: false, status: "sent" });
+      if (error) throw error;
+    } else {
+      const db = dbLokal();
+      db.messages.push({ id: uid(), sender_id: me.id, recipient_id: item.user_id, group_id: null, kind: "text", body: teks, is_broadcast: false, status: "sent", created_at: new Date().toISOString() });
+      simpanLokal(db);
+    }
+    tutupKetikStory();
+    toastPosel("Balas terkirim ✓");
+  } catch (e) {
+    alert("Gagal kirim balasan: " + (e.message || e));
+  } finally { if (btn) btn.disabled = false; }
+}
 function balasStory() {
   const item = storyAktif[storyIdx];
   if (!item) return;
@@ -2725,7 +2773,7 @@ window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
 window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.kirimMediaBesar = kirimMediaBesar;
 window.bukaMenuChat = bukaMenuChat;
-window.pilihAudioStory = pilihAudioStory; window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.pfModeEdit = pfModeEdit; window.pfModeLihat = pfModeLihat; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
+window.mulaiBalasStory = mulaiBalasStory; window.kirimBalasStory = kirimBalasStory; window.tutupKetikStory = tutupKetikStory; window.pilihAudioStory = pilihAudioStory; window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.pfModeEdit = pfModeEdit; window.pfModeLihat = pfModeLihat; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
 $("btnSimpanKey").onclick = async () => {
   const k = $("inAnonKey").value.trim();
   if (!k) { pesanAuth("Tempel anon key dulu."); return; }
