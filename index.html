@@ -274,7 +274,14 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .modal-card .label { margin-top: 10px; }
 .modal-card input { width: 100%; padding: 11px 12px; border: 1px solid #bdbdbd; border-radius: 3px; font-size: 15px; outline: none; background: #fff; }
 
-  </style>
+  .panel-refresh { margin:12px 0 4px; border:1px solid #dbe9f4; background:#f4faff; border-radius:12px; padding:12px 12px 10px; }
+.panel-refresh-judul { font-size:13.5px; font-weight:700; color:#0f4c75; }
+.panel-refresh-info { font-size:12.5px; color:#555; margin-top:4px; }
+.panel-refresh-btns { display:flex; gap:8px; margin-top:10px; }
+.panel-refresh-btns button { flex:1; border:0; border-radius:9px; padding:10px 8px; font-size:12.5px; font-weight:600; background:#0f86c9; color:#fff; }
+.panel-refresh-btns button.sekunder { background:#e8f1f8; color:#0f4c75; }
+.panel-refresh-note { font-size:11.5px; color:#777; margin-top:8px; line-height:1.4; }
+</style>
 </head>
 <body>
 <div class="app">
@@ -420,9 +427,15 @@ body.chat-aktif { overflow: hidden; height: 100%; }
         <button onclick="salinPin()" class="btn" style="background:#555555;color:#fff;height:34px;font-size:12.5px">Salin PIN</button>
         <p style="margin:10px 0 0;font-size:13px">Kode pemulihan: <button onclick="kodeBaruAkun()" class="btn" style="background:#0f86c9;color:#fff;height:30px;font-size:12px">Buat kode baru</button></p>
         <p style="margin:8px 0 0;font-size:13px">Mode: <span id="setMode"></span></p>
-        <p style="margin:10px 0 0;font-size:12.5px;color:#555">Versi web: <b id="setVersi">v4.3.31</b>
-          <button onclick="muatUlangSegar()" style="margin-left:6px;background:#0f86c9;color:#fff;border:0;border-radius:8px;padding:6px 10px;font-size:12px">Muat ulang versi terbaru</button>
-        </p>
+        <div class="panel-refresh">
+          <div class="panel-refresh-judul">Versi &amp; pembaruan</div>
+          <div class="panel-refresh-info">Versi web: <b id="setVersi">v4.3.32</b> • Mode: <span id="setModePanel"></span></div>
+          <div class="panel-refresh-btns">
+            <button type="button" onclick="muatUlangSegar()">Muat ulang</button>
+            <button type="button" class="sekunder" onclick="bersihkanCache()">Hapus cache</button>
+          </div>
+          <div class="panel-refresh-note">Kalau tampilan masih versi lama, tekan “Hapus cache”. Chat dan akun tidak terhapus.</div>
+        </div>
       </div>
       <div id="pfEdit" style="display:none;background:#f7f7f7;border:1px solid #e2e2e2;border-radius:12px;padding:12px;margin:4px 0 10px">
         <button class="btn-bbm" style="margin:0" onclick="document.getElementById('pfFoto').click()">Pilih foto profil</button>
@@ -1225,6 +1238,7 @@ async function masukAplikasi() {
   $("setUser").textContent = me.username;
   $("setPin").textContent = me.pin;
   $("setMode").textContent = mode === "cloud" ? "Cloud Supabase (sinkron antar HP)" : "Lokal (demo, hanya HP ini)";
+  const mp = $("setModePanel"); if (mp) mp.textContent = mode === "cloud" ? "Cloud" : "Lokal";
   $("ckGetarPing").checked = localStorage.getItem(LS_PING) !== "0";
   setBadge();
   await muatSemua();
@@ -1344,6 +1358,19 @@ function muatUlangSegar() {
     u.searchParams.set("v", String(Date.now()));
     location.replace(u.toString());
   } catch (e) { location.reload(); }
+}
+async function bersihkanCache() {
+  try {
+    if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map((k) => caches.delete(k))); }
+  } catch (e) {}
+  try {
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+      const rs = await navigator.serviceWorker.getRegistrations();
+      rs.forEach((r) => { try { r.unregister(); } catch (e) {} });
+    }
+  } catch (e) {}
+  toastPosel("Cache dibersihkan, memuat ulang…");
+  setTimeout(muatUlangSegar, 500);
 }
 function toastPosel(t) {
   let el = document.getElementById("toastPosel");
@@ -2788,7 +2815,7 @@ window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
 window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.kirimMediaBesar = kirimMediaBesar;
 window.bukaMenuChat = bukaMenuChat;
-window.muatUlangSegar = muatUlangSegar; window.mulaiBalasStory = mulaiBalasStory; window.kirimBalasStory = kirimBalasStory; window.tutupKetikStory = tutupKetikStory; window.pilihAudioStory = pilihAudioStory; window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.pfModeEdit = pfModeEdit; window.pfModeLihat = pfModeLihat; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
+window.bersihkanCache = bersihkanCache; window.muatUlangSegar = muatUlangSegar; window.mulaiBalasStory = mulaiBalasStory; window.kirimBalasStory = kirimBalasStory; window.tutupKetikStory = tutupKetikStory; window.pilihAudioStory = pilihAudioStory; window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.pfModeEdit = pfModeEdit; window.pfModeLihat = pfModeLihat; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
 $("btnSimpanKey").onclick = async () => {
   const k = $("inAnonKey").value.trim();
   if (!k) { pesanAuth("Tempel anon key dulu."); return; }
