@@ -632,6 +632,10 @@ body.chat-aktif { overflow: hidden; height: 100%; }
         <button class="st-batal" onclick="batalRekam()">Batal</button>
         <button class="st-kirim" id="btnRekam" onclick="toggleRekam()">Mulai rekam</button>
       </div>
+      <div id="rekamCadangan" style="display:none;margin-top:10px;text-align:center">
+        <button class="st-batal" style="width:100%" onclick="pilihAudioStory()">Atau pilih file audio dari HP</button>
+      </div>
+      <input type="file" id="inpStoryAudio" accept="audio/*" style="display:none" onchange="storyFileDipilih(this)">
     </div>
   </div>
 </div>
@@ -1794,7 +1798,7 @@ async function storyFileDipilih(inp) {
   const mb = f.size / 1048576;
   if (tipe === "foto" && mb > 12) { alert("Foto maksimal 12 MB."); return; }
   if (tipe === "video" && mb > 40) { alert("Video maksimal 40 MB (durasi maks 1 menit)."); return; }
-  if (tipe === "musik" && mb > 45) { alert("MP3 maksimal 45 MB."); return; }
+  if ((tipe === "musik" || tipe === "suara") && mb > 45) { alert("Audio maksimal 45 MB."); return; }
   if (tipe === "video") {
     const dur = await durasiMedia(f);
     if (dur > 61) { alert("Video maksimal 1 menit. Video ini " + Math.round(dur) + " detik."); return; }
@@ -1885,11 +1889,30 @@ function storyRekam() {
   $("sheetStoryJudul").textContent = "Story suara";
   $("rekamInfo").innerHTML = '<span class="rekam-dot"></span>siap merekam (maks 60 detik)';
   $("btnRekam").textContent = "Mulai rekam";
+  const cad = $("rekamCadangan"); if (cad) cad.style.display = "none";
+}
+function pesanGalatRekam(e) {
+  const n = (e && e.name) || "";
+  if (n === "NotAllowedError" || n === "SecurityError") return "Izin mikrofon ditolak. Buka Pengaturan HP → Aplikasi → izinkan Mikrofon, lalu muat ulang halaman.";
+  if (n === "NotFoundError" || n === "DevicesNotFoundError") return "Tidak ada mikrofon yang terdeteksi di HP ini.";
+  if (n === "NotReadableError" || /Could not start audio source/i.test((e && e.message) || "")) return "Mikrofon sedang dipakai aplikasi lain (panggilan/voice recorder), atau diblokir sistem. Tutup aplikasi itu, lalu coba lagi.";
+  return (e && e.message) || "Tidak diketahui";
+}
+function tawarkanAudio() {
+  const cad = $("rekamCadangan"); if (cad) cad.style.display = "block";
+}
+function pilihAudioStory() {
+  storyTipePilih = "suara";
+  const inp = $("inpStoryAudio");
+  inp.value = "";
+  inp.click();
 }
 async function toggleRekam() {
   if (storyRek) { storyRek.stop(); return; }
   try {
-    const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    let st = null;
+    try { st = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } }); }
+    catch (e1) { st = await navigator.mediaDevices.getUserMedia({ audio: true }); }
     storyChunk = [];
     storyRek = new MediaRecorder(st);
     storyRek.ondataavailable = (e) => { if (e.data.size) storyChunk.push(e.data); };
@@ -1902,7 +1925,8 @@ async function toggleRekam() {
       if (blob.size < 800) return;
       storyMulaiUnggah();
       try {
-        const f = new File([blob], "cerita-" + Date.now() + ".webm", { type: blob.type });
+        const ext = /mp4|m4a|aac/.test(blob.type) ? "m4a" : /ogg/.test(blob.type) ? "ogg" : "webm";
+        const f = new File([blob], "cerita-" + Date.now() + "." + ext, { type: blob.type || "audio/webm" });
         const url = await unggahStory(f, storySetPersen);
         await simpanStory({ kind: "suara", media_url: url });
         storySelesaiUnggah();
@@ -1916,7 +1940,11 @@ async function toggleRekam() {
       $("rekamInfo").innerHTML = '<span class="rekam-dot"></span>merekam ' + s + " detik";
       if (s >= 60) { try { storyRek.stop(); } catch (e) {} }
     }, 1000);
-  } catch (e) { alert("Mikrofon tidak bisa dipakai: " + (e.message || e)); }
+  } catch (e) {
+    $("rekamInfo").innerHTML = '<span style="color:#b3261e">Mikrofon tidak bisa dipakai.</span>';
+    tawarkanAudio();
+    alert("Mikrofon tidak bisa dipakai: " + pesanGalatRekam(e) + "\n\nSementara itu, pakai tombol \"pilih file audio\" di bawah.");
+  }
 }
 function batalRekam(diam) {
   clearTimeout(storyRekTimer);
@@ -2671,7 +2699,7 @@ window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
 window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.kirimMediaBesar = kirimMediaBesar;
 window.bukaMenuChat = bukaMenuChat;
-window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.pfModeEdit = pfModeEdit; window.pfModeLihat = pfModeLihat; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
+window.pilihAudioStory = pilihAudioStory; window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.pfModeEdit = pfModeEdit; window.pfModeLihat = pfModeLihat; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
 $("btnSimpanKey").onclick = async () => {
   const k = $("inAnonKey").value.trim();
   if (!k) { pesanAuth("Tempel anon key dulu."); return; }
