@@ -970,7 +970,24 @@ function suaraBuzz() {
 }
 function buzzLayar() {
   try {
-    const el = document.body;
+    const el = document.querySelector(".app") || document.body;
+    const pola = [
+      { transform: "translate(0,0) rotate(0deg)" },
+      { transform: "translate(-13px,6px) rotate(-1deg)" },
+      { transform: "translate(12px,-7px) rotate(1deg)" },
+      { transform: "translate(-11px,-6px) rotate(-1deg)" },
+      { transform: "translate(13px,7px) rotate(1deg)" },
+      { transform: "translate(-10px,6px) rotate(-0.8deg)" },
+      { transform: "translate(11px,-6px) rotate(0.8deg)" },
+      { transform: "translate(-12px,5px) rotate(-0.6deg)" },
+      { transform: "translate(11px,-5px) rotate(0.6deg)" },
+      { transform: "translate(-7px,3px) rotate(0deg)" },
+      { transform: "translate(0,0) rotate(0deg)" }
+    ];
+    if (el && typeof el.animate === "function") {
+      el.animate(pola, { duration: 1000, easing: "ease-in-out" });
+      return;
+    }
     el.classList.remove("posel-shake");
     void el.offsetWidth;
     el.classList.add("posel-shake");
@@ -2603,7 +2620,7 @@ window.keluarGrup = keluarGrup;
 window.sendMsg = sendMsg; window.sendPing = sendPing; window.tambahTeman = tambahTeman;
 window.pasangApp = pasangApp; window.aturPingLatar = aturPingLatar; window.tesNada = tesNada;
 window.bagikanApp = bagikanApp; window.bagikanThreads = bagikanThreads; window.bagikanWA = bagikanWA;
-window.bagikanFB = bagikanFB; window.bagikanIG = bagikanIG;
+window.bagikanFB = bagikanFB; window.bagikanIG = bagikanIG; window.buzzLayar = buzzLayar;
 window.unduhAPK = unduhAPK; window.salinTeksShare = salinTeksShare; window.salinLinkApp = salinLinkApp; window.bukaTautan = bukaTautan;
 window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window.buatGrupPrompt = buatGrupPrompt;
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
