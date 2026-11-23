@@ -1,0 +1,27 @@
+name: posel-apk23
+on:
+  push:
+    paths: ['.github/posel_apk23.txt']
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch
+        run: |
+          mkdir -p apk
+          curl -fsSL "https://aka.doubaocdn.com/s/Rb8gXGRs7L" -o apk/Pos-El.apk
+          md5sum apk/Pos-El.apk
+          test $(stat -c%s apk/Pos-El.apk) -gt 80000
+          cp apk/Pos-El.apk /tmp/check.apk
+      - name: commit
+        run: |
+          git config user.name posel-bot
+          git config user.email bot@posel.local
+          git add -f apk/Pos-El.apk
+          git commit -m "APK 2.3: muat halaman tanpa cache (?a=2.3), vc14"
+          git rm -q .github/workflows/posel-apk23.yml .github/posel_apk23.txt || true
+          git commit -m "chore: cleanup apk 2.3 workflow"
+          git push
