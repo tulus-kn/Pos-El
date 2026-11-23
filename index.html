@@ -420,6 +420,9 @@ body.chat-aktif { overflow: hidden; height: 100%; }
         <button onclick="salinPin()" class="btn" style="background:#555555;color:#fff;height:34px;font-size:12.5px">Salin PIN</button>
         <p style="margin:10px 0 0;font-size:13px">Kode pemulihan: <button onclick="kodeBaruAkun()" class="btn" style="background:#0f86c9;color:#fff;height:30px;font-size:12px">Buat kode baru</button></p>
         <p style="margin:8px 0 0;font-size:13px">Mode: <span id="setMode"></span></p>
+        <p style="margin:10px 0 0;font-size:12.5px;color:#555">Versi web: <b id="setVersi">v4.3.31</b>
+          <button onclick="muatUlangSegar()" style="margin-left:6px;background:#0f86c9;color:#fff;border:0;border-radius:8px;padding:6px 10px;font-size:12px">Muat ulang versi terbaru</button>
+        </p>
       </div>
       <div id="pfEdit" style="display:none;background:#f7f7f7;border:1px solid #e2e2e2;border-radius:12px;padding:12px;margin:4px 0 10px">
         <button class="btn-bbm" style="margin:0" onclick="document.getElementById('pfFoto').click()">Pilih foto profil</button>
@@ -1335,6 +1338,13 @@ window.poselBack = function () {
   toastPosel("Tekan sekali lagi untuk keluar");
   return true;
 };
+function muatUlangSegar() {
+  try {
+    const u = new URL(location.href);
+    u.searchParams.set("v", String(Date.now()));
+    location.replace(u.toString());
+  } catch (e) { location.reload(); }
+}
 function toastPosel(t) {
   let el = document.getElementById("toastPosel");
   if (!el) {
@@ -2778,7 +2788,7 @@ window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
 window.keluarAkun = keluarAkun; window.kirimKeBackend = kirimKeBackend; window.kirimMediaBesar = kirimMediaBesar;
 window.bukaMenuChat = bukaMenuChat;
-window.mulaiBalasStory = mulaiBalasStory; window.kirimBalasStory = kirimBalasStory; window.tutupKetikStory = tutupKetikStory; window.pilihAudioStory = pilihAudioStory; window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.pfModeEdit = pfModeEdit; window.pfModeLihat = pfModeLihat; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
+window.muatUlangSegar = muatUlangSegar; window.mulaiBalasStory = mulaiBalasStory; window.kirimBalasStory = kirimBalasStory; window.tutupKetikStory = tutupKetikStory; window.pilihAudioStory = pilihAudioStory; window.bukaStory = bukaStory; window.tutupStory = tutupStory; window.storyTeks = storyTeks; window.storyPilih = storyPilih; window.storyRekam = storyRekam; window.toggleRekam = toggleRekam; window.batalRekam = batalRekam; window.kirimStoryTeks = kirimStoryTeks; window.storyFileDipilih = storyFileDipilih; window.pilihWarnaStory = pilihWarnaStory; window.bukaStoryUser = bukaStoryUser; window.tutupViewer = tutupViewer; window.storyNext = storyNext; window.hapusStoryIni = hapusStoryIni; window.storyPrev = storyPrev; window.balasStory = balasStory; window.sukaStory = sukaStory; window.bukaDrawer = bukaDrawer; window.tutupDrawer = tutupDrawer; window.bukaCari = bukaCari; window.drawerKe = drawerKe; window.menuChatAktif = menuChatAktif; window.bukaProfil = bukaProfil; window.pfModeEdit = pfModeEdit; window.pfModeLihat = pfModeLihat; window.tutupProfil = tutupProfil; window.simpanProfil = simpanProfil; window.tutupMenuChat = tutupMenuChat; window.cmEdit = cmEdit; window.cmHapus = cmHapus; window.bukaReset = bukaReset; window.tutupReset = tutupReset; window.kirimReset = kirimReset; window.salinKode = salinKode; window.tutupKode = tutupKode; window.kodeBaruAkun = kodeBaruAkun;
 $("btnSimpanKey").onclick = async () => {
   const k = $("inAnonKey").value.trim();
   if (!k) { pesanAuth("Tempel anon key dulu."); return; }
