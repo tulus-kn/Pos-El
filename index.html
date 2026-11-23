@@ -970,7 +970,7 @@ function suaraBuzz() {
 }
 function buzzLayar() {
   try {
-    const el = document.querySelector(".app") || document.body;
+    const el = document.querySelector(".page.active") || document.querySelector(".app") || document.body;
     const pola = [
       { transform: "translate(0,0) rotate(0deg)" },
       { transform: "translate(-13px,6px) rotate(-1deg)" },
@@ -994,10 +994,44 @@ function buzzLayar() {
     setTimeout(function () { el.classList.remove("posel-shake"); }, 1100);
   } catch (e) {}
 }
+function lapisanPing(dari) {
+  try {
+    let el = document.getElementById("lapisanPing");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "lapisanPing";
+      el.style.cssText = "position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(211,47,47,.28);pointer-events:none;opacity:1;transition:opacity .3s";
+      el.innerHTML = '<div style="background:#D32F2F;color:#fff;padding:16px 22px;border-radius:16px;font-size:22px;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.35)">🔔 PING!</div>'
+        + '<div style="margin-top:10px;background:rgba(0,0,0,.65);color:#fff;padding:6px 14px;border-radius:20px;font-size:14px" id="lapisanPingDari"></div>';
+      document.body.appendChild(el);
+    }
+    const isi = el.querySelector("#lapisanPingDari");
+    if (isi) isi.textContent = "dari " + dari;
+    el.style.display = "flex";
+    el.style.opacity = "1";
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.style.opacity = "0"; setTimeout(function () { el.style.display = "none"; }, 320); }, 2600);
+  } catch (e) {}
+}
+async function cekPingTertunda() {
+  if (mode !== "cloud" || !sb || !me || document.hidden) return;
+  try {
+    let sejak = localStorage.getItem("posel.ping.terakhir");
+    if (!sejak) sejak = new Date(Date.now() - 10 * 60000).toISOString();
+    const { data } = await sb.from("posel_messages")
+      .select("id,sender_id,kind,created_at")
+      .eq("recipient_id", me.id).eq("kind", "ping")
+      .gt("created_at", sejak)
+      .order("created_at", { ascending: false }).limit(1);
+    if (data && data[0]) tampilPing(namaPengirim(data[0].sender_id));
+  } catch (e) {}
+}
+document.addEventListener("visibilitychange", function () { if (!document.hidden) setTimeout(cekPingTertunda, 800); });
 function tampilPing(dari) {
   $("bannerPingDari").textContent = dari;
   $("bannerPing").style.display = "block";
-  buzzLayar(); suaraBuzz(); getarPing(); putarPing();
+  try { localStorage.setItem("posel.ping.terakhir", new Date().toISOString()); } catch (e) {}
+  lapisanPing(dari); buzzLayar(); suaraBuzz(); getarPing(); putarPing();
   setTimeout(() => { $("bannerPing").style.display = "none"; }, 3500);
 }
 function setBadge() {
@@ -2620,7 +2654,7 @@ window.keluarGrup = keluarGrup;
 window.sendMsg = sendMsg; window.sendPing = sendPing; window.tambahTeman = tambahTeman;
 window.pasangApp = pasangApp; window.aturPingLatar = aturPingLatar; window.tesNada = tesNada;
 window.bagikanApp = bagikanApp; window.bagikanThreads = bagikanThreads; window.bagikanWA = bagikanWA;
-window.bagikanFB = bagikanFB; window.bagikanIG = bagikanIG; window.buzzLayar = buzzLayar;
+window.bagikanFB = bagikanFB; window.bagikanIG = bagikanIG; window.buzzLayar = buzzLayar; window.lapisanPing = lapisanPing;
 window.unduhAPK = unduhAPK; window.salinTeksShare = salinTeksShare; window.salinLinkApp = salinLinkApp; window.bukaTautan = bukaTautan;
 window.jawabUndangan = jawabUndangan; window.simpanStatus = simpanStatus; window.buatGrupPrompt = buatGrupPrompt;
 window.broadcastPrompt = broadcastPrompt; window.salinPin = salinPin; window.tesPing = tesPing;
