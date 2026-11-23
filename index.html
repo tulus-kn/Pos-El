@@ -790,7 +790,7 @@ try {
   ({ createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/+esm"));
 } catch (e) {
   try {
-    ({ createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"));
+    ({ createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/+esm"));
   } catch (e2) {
     console.warn("CDN Supabase tidak bisa dimuat, mode cloud tidak tersedia:", e2);
   }
@@ -838,7 +838,18 @@ function acakPin() {
   return [...b].map((x) => h[x % 16]).join("");
 }
 function uid() { return "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+/* v4.4 keamanan: argumen aman untuk handler inline (onclick="f(${jsArg(x)})").
+   esc() saja TIDAK cukup di dalam string JS: entity (&#39;) didekode parser HTML
+   sebelum JS jalan. JSON.stringify membuat literal JS yang benar, lalu di-escape HTML. */
+function jsArg(s) { return esc(JSON.stringify(String(s ?? ""))); }
+function safeWarna(w) { return /^#[0-9a-fA-F]{6}$/.test(String(w || "")) ? String(w) : "#0f86c9"; }
+function safeUrl(u) {
+  u = String(u || "");
+  if (/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(u)) return u;
+  if (u.indexOf(SUPABASE_URL + "/storage/v1/object/public/posel-media/") === 0 && /^[A-Za-z0-9._~:\/?=&%+\-]+$/.test(u)) return u;
+  return "";
+}
 function jam(iso) { try { return new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }); } catch { return ""; } }
 function getarPing() {
   if (localStorage.getItem(LS_PING) === "0") return;
@@ -1286,7 +1297,7 @@ function renderDrawer() {
   $("drawerUser").textContent = "@" + (me.username || "—") + "  •  PIN " + (me.pin || "—");
   const av = $("drawerAvatar");
   av.textContent = (me.display_name || me.username || "?").trim().charAt(0).toUpperCase();
-  if (me.avatar_url) { av.style.backgroundImage = "url(" + me.avatar_url + ")"; av.textContent = ""; }
+  if (me.avatar_url) { av.style.backgroundImage = "url(" + safeUrl(me.avatar_url) + ")"; av.textContent = ""; }
   else { av.style.backgroundImage = ""; }
 }
 function menuChatAktif() {
@@ -1524,9 +1535,9 @@ function itemKontak(k, klik, kind, id, samarkan) {
   const pinTampil = samarkan
     ? "PIN ••••" + String(k.pin || "").slice(-4)
     : "PIN " + esc(k.pin || "");
-  const menu = kind ? `<span class="chat-menu" onclick="event.stopPropagation();bukaMenuChat('${kind}','${id}','${esc(nm)}')">⋯</span>` : "";
+  const menu = kind ? `<span class="chat-menu" onclick="event.stopPropagation();bukaMenuChat('${kind}','${id}',${jsArg(nm)})">⋯</span>` : "";
   const av = k.avatar_url
-    ? `<div class="avatar avatar-img"><img src="${esc(k.avatar_url)}" alt=""></div>`
+    ? `<div class="avatar avatar-img"><img src="${esc(safeUrl(k.avatar_url))}" alt=""></div>`
     : `<div class="avatar">${esc(nm.slice(-1).toUpperCase())}</div>`;
   const kunci = kind === "dm" ? "d:" + (id || k.id) : "";
   const ringkas = kunci ? ringkasPesan(kunci) : null;
@@ -1621,7 +1632,7 @@ function renderKontak() {
       </div>
     </div>`).join("") : '<div class="kosong">Tidak ada undangan.</div>';
   $("daftarKontak").innerHTML = kontakSaya.length
-    ? kontakSaya.map((k) => itemKontak(k, `openChat('dm','${k.id}','${esc(k.display_name)}')`)).join("")
+    ? kontakSaya.map((k) => itemKontak(k, `openChat('dm','${k.id}',${jsArg(k.display_name)})`)).join("")
     : '<div class="kosong">Belum ada kontak. Tambah teman pakai PIN di atas.</div>';
 }
 function renderChat() {
@@ -1632,17 +1643,17 @@ function renderChat() {
   kontakSaya.forEach((k) => {
     const nm = namaAlias(k.id, k.display_name);
     if (q && !(nm.toLowerCase().includes(q) || (k.pin || "").toUpperCase() === q.toUpperCase())) return;
-    html += itemKontak(k, `openChat('dm','${k.id}','${esc(nm)}')`, "dm", k.id, true);
+    html += itemKontak(k, `openChat('dm','${k.id}',${jsArg(nm)})`, "dm", k.id, true);
   });
   grupSaya.forEach((g) => {
     const nm = namaAlias("g" + g.id, g.name);
     if (q && !nm.toLowerCase().includes(q)) return;
     const rg = ringkasPesan("g:" + g.id);
-    html += `<div class="chat-list-item" onclick="openChat('group','${g.id}','👥 ${esc(nm)}')">
+    html += `<div class="chat-list-item" onclick="openChat('group','${g.id}',${jsArg('👥 ' + nm)})">
       <div class="avatar">👥</div>
       <div class="chat-info"><div class="chat-name">👥 ${esc(nm)}</div><div class="chat-preview${rg.kosong ? " kosong-pesan" : ""}">${esc(rg.teks)}</div></div>
       ${metaChat("g:" + g.id)}
-      <span class="chat-menu" onclick="event.stopPropagation();bukaMenuChat('group','${g.id}','${esc(nm)}')">⋯</span></div>`;
+      <span class="chat-menu" onclick="event.stopPropagation();bukaMenuChat('group','${g.id}',${jsArg(nm)})">⋯</span></div>`;
   });
   $("daftarChat").innerHTML = html || '<div class="kosong">' + (q ? "Tidak ada chat yang cocok." : "Belum ada chat. Tambah teman pakai PIN di menu Kontak.") + '</div>';
 }
@@ -1719,7 +1730,7 @@ function renderStories() {
     const sayaBaru = storySaya[storySaya.length - 1].created_at;
     const sudah = localStorage.getItem(LS_STORY_SEEN + me.id) >= sayaBaru;
     html += `<div class="st" onclick="bukaStoryUser('${me.id}')">
-      <div class="st-ring ${sudah ? "seen" : ""}"><div class="st-in">${me.avatar_url ? `<img src="${esc(me.avatar_url)}">` : esc((me.display_name || "?").charAt(0).toUpperCase())}</div></div>
+      <div class="st-ring ${sudah ? "seen" : ""}"><div class="st-in">${me.avatar_url ? `<img src="${esc(safeUrl(me.avatar_url))}">` : esc((me.display_name || "?").charAt(0).toUpperCase())}</div></div>
       <div class="st-cap">Story saya</div><div class="st-sub">${storySaya.length} item</div></div>`;
   }
   storyKontak.forEach((g) => {
@@ -1727,7 +1738,7 @@ function renderStories() {
     const last = g.items[g.items.length - 1].created_at;
     const sudah = localStorage.getItem(LS_STORY_SEEN + g.user.id) >= last;
     html += `<div class="st" onclick="bukaStoryUser('${g.user.id}')">
-      <div class="st-ring ${sudah ? "seen" : ""}"><div class="st-in">${g.user.avatar_url ? `<img src="${esc(g.user.avatar_url)}">` : esc(nama.charAt(0).toUpperCase())}</div></div>
+      <div class="st-ring ${sudah ? "seen" : ""}"><div class="st-in">${g.user.avatar_url ? `<img src="${esc(safeUrl(g.user.avatar_url))}">` : esc(nama.charAt(0).toUpperCase())}</div></div>
       <div class="st-cap">${esc(nama)}</div><div class="st-sub">${sudah ? "sudah dilihat" : g.items.length + " baru"}</div></div>`;
   });
   if (!storySaya.length && !storyKontak.length) {
@@ -1832,7 +1843,7 @@ function storyGagalUnggah() {
 async function unggahStory(file, onProg) {
   if (mode !== "cloud" || !sb) throw new Error("Story butuh mode Cloud (login Supabase).");
   const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const path = "stories/" + me.id + "/" + Date.now() + "." + ext;
+  const path = "stories/" + me.id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 10) + "." + ext;
   const ses = await sb.auth.getSession();
   const token = (ses.data && ses.data.session && ses.data.session.access_token) || "";
   if (token) {
@@ -1928,7 +1939,7 @@ function bukaStoryUser(uid) {
   $("vwNama").textContent = pemilik.display_name || "Story";
   const av = $("vwAv");
   av.textContent = (pemilik.display_name || "?").charAt(0).toUpperCase();
-  if (pemilik.avatar_url) { av.style.backgroundImage = "url(" + pemilik.avatar_url + ")"; av.textContent = ""; } else av.style.backgroundImage = "";
+  if (pemilik.avatar_url) { av.style.backgroundImage = "url(" + safeUrl(pemilik.avatar_url) + ")"; av.textContent = ""; } else av.style.backgroundImage = "";
   $("viewerStory").classList.add("buka");
   $("vwBars").innerHTML = storyAktif.map(() => '<div class="vw-seg"><i></i></div>').join("");
   storyIdx = 0;
@@ -1947,16 +1958,16 @@ function tampilStory(i) {
   if (hapusEl) hapusEl.style.display = (storyPemilik === me.id) ? "block" : "none";
   let isi = "";
   if (item.kind === "teks") {
-    isi = `<div class="vw-teks" style="background:linear-gradient(160deg,${item.warna || "#0f86c9"},#111)">${esc(item.teks || "")}</div>`;
+    isi = `<div class="vw-teks" style="background:linear-gradient(160deg,${safeWarna(item.warna)},#111)">${esc(item.teks || "")}</div>`;
     storyDur = 6000;
   } else if (item.kind === "foto") {
-    isi = `<img src="${esc(item.media_url)}" alt="">`;
+    isi = `<img src="${esc(safeUrl(item.media_url))}" alt="">`;
     storyDur = 6000;
   } else if (item.kind === "video") {
-    isi = `<video src="${esc(item.media_url)}" autoplay playsinline></video>`;
+    isi = `<video src="${esc(safeUrl(item.media_url))}" autoplay playsinline></video>`;
     storyDur = 0;
   } else if (item.kind === "suara" || item.kind === "musik") {
-    isi = `<div class="vw-audio"><span class="ikon">${item.kind === "musik" ? "🎵" : "🎙️"}</span><audio src="${esc(item.media_url)}" autoplay controls></audio></div>`;
+    isi = `<div class="vw-audio"><span class="ikon">${item.kind === "musik" ? "🎵" : "🎙️"}</span><audio src="${esc(safeUrl(item.media_url))}" autoplay controls></audio></div>`;
     storyDur = 0;
   }
   if (item.teks && item.kind !== "teks") isi += `<div class="vw-cap">${esc(item.teks)}</div>`;
