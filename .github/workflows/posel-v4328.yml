@@ -13,7 +13,7 @@ jobs:
         run: |
           curl -fsSL "https://aka.doubaocdn.com/s/fk72H37cxK" -o new.html
           md5sum new.html
-          grep -q 'vw-hati on' new.html
+          grep -q 'vwHati' new.html
           grep -q 'Suka story kamu' new.html
           cp new.html index.html
       - name: commit
