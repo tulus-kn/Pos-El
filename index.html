@@ -165,6 +165,15 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .chat-name { font-size: 16.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; color: #141414; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chat-meta { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
 .chat-time { font-size: 11.5px; color: #8a8a8a; white-space: nowrap; }
+@keyframes poselShake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-9px, 4px); }
+  40% { transform: translate(8px, -5px); }
+  60% { transform: translate(-7px, -4px); }
+  80% { transform: translate(6px, 5px); }
+}
+.posel-shake { animation: poselShake .6s ease-in-out; }
+@media (prefers-reduced-motion: reduce) { .posel-shake { animation: none; } }
 .unread { background: #e5453f; color: #fff; font-size: 12px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; margin-left: 8px; flex: none; }
 .chat-preview.kosong-pesan { color: #9a9a9a; font-style: italic; }
 .chat-preview { color: #6d6d6d; font-size: 13px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -939,10 +948,19 @@ function bunyi(jenis) {
 }
 function putarPing() { bunyi("ping"); }
 function tesNada(jenis) { bunyi(jenis === "pesan" ? "pesan" : "ping"); }
+function buzzLayar() {
+  try {
+    const el = document.body;
+    el.classList.remove("posel-shake");
+    void el.offsetWidth;
+    el.classList.add("posel-shake");
+    setTimeout(function () { el.classList.remove("posel-shake"); }, 700);
+  } catch (e) {}
+}
 function tampilPing(dari) {
   $("bannerPingDari").textContent = dari;
   $("bannerPing").style.display = "block";
-  getarPing(); putarPing();
+  buzzLayar(); getarPing(); putarPing();
   setTimeout(() => { $("bannerPing").style.display = "none"; }, 3500);
 }
 function setBadge() {
