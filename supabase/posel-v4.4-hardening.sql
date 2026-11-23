@@ -1,0 +1,2 @@
+-- lihat file lengkap: https://github.com/tulus-kn/Pos-El/blob/main/supabase/posel-v4.4-hardening.sql
+-- (placeholder sementara; isi sebenarnya diunggah lewat workflow deploy)
