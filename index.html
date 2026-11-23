@@ -218,6 +218,7 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .msg.in .msg-bubble::before { content: ""; position: absolute; left: -6px; top: 11px; width: 10px; height: 10px; background: #fff; border-left: 1px solid #cfcfcf; border-bottom: 1px solid #cfcfcf; transform: rotate(45deg); }
 .msg.out .msg-bubble { background: #f2faff; border-color: #bfdcef; }
 .msg.out .msg-bubble::before { content: ""; position: absolute; right: -6px; top: 11px; width: 10px; height: 10px; background: #f2faff; border-right: 1px solid #bfdcef; border-top: 1px solid #bfdcef; transform: rotate(45deg); }
+.story-tag { font-size: 11px; font-weight: 700; color: #0f86c9; margin-bottom: 4px; }
 .msg-ping .msg-bubble { background: #c62828 !important; border: 2px solid #8e0000 !important; color: #fff !important; }
 .status { font-size: 11px; color: #7a7a7a; margin-top: 4px; text-align: right; }
 .status-R { color: #1a7d2e; }
@@ -1607,6 +1608,7 @@ function ringkasPesan(kunci) {
   const m = pesanAkhir[kunci];
   if (!m) return { teks: "Belum ada pesan", kosong: true };
   let t = m.body || "";
+  if (t.indexOf("[STORY] ") === 0) t = "↩ " + t.slice(8);
   if (m.kind === "ping") t = "🔔 PING";
   else if (m.kind === "foto") t = "📷 Foto";
   else if (m.kind === "video") t = "🎬 Video";
@@ -2090,15 +2092,16 @@ async function kirimBalasStory() {
   if (btn) btn.disabled = true;
   try {
     if (mode === "cloud" && sb) {
-      const { error } = await sb.from("posel_messages").insert({ sender_id: me.id, recipient_id: item.user_id, group_id: null, kind: "text", body: teks, is_broadcast: false, status: "sent" });
+      const { error } = await sb.from("posel_messages").insert({ sender_id: me.id, recipient_id: item.user_id, group_id: null, kind: "text", body: "[STORY] " + teks, is_broadcast: false, status: "sent" });
       if (error) throw error;
     } else {
       const db = dbLokal();
-      db.messages.push({ id: uid(), sender_id: me.id, recipient_id: item.user_id, group_id: null, kind: "text", body: teks, is_broadcast: false, status: "sent", created_at: new Date().toISOString() });
+      db.messages.push({ id: uid(), sender_id: me.id, recipient_id: item.user_id, group_id: null, kind: "text", body: "[STORY] " + teks, is_broadcast: false, status: "sent", created_at: new Date().toISOString() });
       simpanLokal(db);
     }
     tutupKetikStory();
     toastPosel("Balas terkirim ✓");
+    try { await muatSemua(true); } catch (e) {}
   } catch (e) {
     alert("Gagal kirim balasan: " + (e.message || e));
   } finally { if (btn) btn.disabled = false; }
@@ -2417,7 +2420,9 @@ function tambahPesanEl(m) {
     ? `<div class="msg-bubble media-bubble"><video src="${esc(mediaUrl)}" data-judul="${esc(mediaJudul)}" controls playsinline preload="metadata"></video>` + cap + `</div>` + stat
     : isAud
     ? `<div class="msg-bubble media-bubble"><audio src="${esc(mediaUrl)}" data-judul="${esc(mediaJudul)}" controls preload="metadata"></audio>` + cap + `</div>` + stat
-    : `<div class="msg-bubble">${esc(m.body)}</div>` + stat;
+    : (typeof m.body === "string" && m.body.indexOf("[STORY] ") === 0)
+      ? `<div class="msg-bubble"><div class="story-tag">↩ Membalas story</div>${esc(m.body.slice(8))}</div>` + stat
+      : `<div class="msg-bubble">${esc(m.body)}</div>` + stat;
   box.appendChild(div);
   elPesan[m.id] = div;
   box.scrollTop = box.scrollHeight;
