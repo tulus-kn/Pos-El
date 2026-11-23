@@ -166,13 +166,18 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .chat-meta { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
 .chat-time { font-size: 11.5px; color: #8a8a8a; white-space: nowrap; }
 @keyframes poselShake {
-  0%, 100% { transform: translate(0, 0); }
-  20% { transform: translate(-9px, 4px); }
-  40% { transform: translate(8px, -5px); }
-  60% { transform: translate(-7px, -4px); }
-  80% { transform: translate(6px, 5px); }
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  10% { transform: translate(-13px, 6px) rotate(-1deg); }
+  20% { transform: translate(12px, -7px) rotate(1deg); }
+  30% { transform: translate(-11px, -6px) rotate(-1deg); }
+  40% { transform: translate(13px, 7px) rotate(1deg); }
+  50% { transform: translate(-10px, 6px) rotate(-0.8deg); }
+  60% { transform: translate(11px, -6px) rotate(0.8deg); }
+  70% { transform: translate(-12px, 5px) rotate(-0.6deg); }
+  80% { transform: translate(11px, -5px) rotate(0.6deg); }
+  90% { transform: translate(-7px, 3px) rotate(0); }
 }
-.posel-shake { animation: poselShake .6s ease-in-out; }
+.posel-shake { animation: poselShake 1s ease-in-out; }
 @media (prefers-reduced-motion: reduce) { .posel-shake { animation: none; } }
 .unread { background: #e5453f; color: #fff; font-size: 12px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; margin-left: 8px; flex: none; }
 .chat-preview.kosong-pesan { color: #9a9a9a; font-style: italic; }
@@ -948,19 +953,34 @@ function bunyi(jenis) {
 }
 function putarPing() { bunyi("ping"); }
 function tesNada(jenis) { bunyi(jenis === "pesan" ? "pesan" : "ping"); }
+function suaraBuzz() {
+  if (localStorage.getItem(LS_SUARA_PING) === "0") return;
+  const c = ctxNada();
+  if (!c) return;
+  const t0 = c.currentTime + 0.02;
+  [0, 0.16].forEach(function (t) {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "square";
+    o.frequency.value = 520;
+    g.gain.setValueAtTime(0.14, t0 + t);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + t + 0.13);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0 + t); o.stop(t0 + t + 0.14);
+  });
+}
 function buzzLayar() {
   try {
     const el = document.body;
     el.classList.remove("posel-shake");
     void el.offsetWidth;
     el.classList.add("posel-shake");
-    setTimeout(function () { el.classList.remove("posel-shake"); }, 700);
+    setTimeout(function () { el.classList.remove("posel-shake"); }, 1100);
   } catch (e) {}
 }
 function tampilPing(dari) {
   $("bannerPingDari").textContent = dari;
   $("bannerPing").style.display = "block";
-  buzzLayar(); getarPing(); putarPing();
+  buzzLayar(); suaraBuzz(); getarPing(); putarPing();
   setTimeout(() => { $("bannerPing").style.display = "none"; }, 3500);
 }
 function setBadge() {
