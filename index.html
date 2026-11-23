@@ -133,8 +133,10 @@ body.chat-aktif { overflow: hidden; height: 100%; }
 .vw-tap { position: absolute; top: 0; bottom: 0; width: 30%; }
 .vw-tap.kiri { left: 0; } .vw-tap.kanan { right: 0; }
 .vw-bawah { display: flex; gap: 10px; align-items: center; padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); }
-.vw-balas { flex: 1; border: 1px solid rgba(255,255,255,.35); border-radius: 20px; padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,.8); background: transparent; }
-.vw-hati { font-size: 24px; }
+.vw-bawah { position: relative; z-index: 6; background: linear-gradient(0deg, rgba(0,0,0,.55), transparent); padding-top: 18px; touch-action: manipulation; }
+.vw-balas { flex: 1; border: 1px solid rgba(255,255,255,.45); border-radius: 22px; padding: 13px 16px; font-size: 13.5px; color: rgba(255,255,255,.9); background: rgba(255,255,255,.1); text-align: left; min-height: 44px; touch-action: manipulation; }
+.vw-hati { font-size: 26px; background: transparent; border: 0; min-width: 48px; min-height: 48px; line-height: 1; touch-action: manipulation; }
+.vw-hati.on { filter: drop-shadow(0 0 6px rgba(255,60,90,.8)); }
 
 /* ========== DRAWER TELEGRAM STYLE (v4.3) ========== */
 .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; display: none; }
@@ -654,8 +656,8 @@ body.chat-aktif { overflow: hidden; height: 100%; }
     <div class="vw-tap kanan" onclick="storyNext()"></div>
   </div>
   <div class="vw-bawah">
-    <input class="vw-balas" id="vwBalas" placeholder="Balas story…" readonly onclick="balasStory()">
-    <div class="vw-hati" onclick="sukaStory()">❤️</div>
+    <button type="button" class="vw-balas" id="vwBalas" onclick="balasStory()">💬 Balas story…</button>
+    <button type="button" class="vw-hati" id="vwHati" onclick="sukaStory()">🤍</button>
   </div>
 </div>
 <input type="file" id="inpStory" style="display:none" onchange="storyFileDipilih(this)">
@@ -1984,6 +1986,13 @@ function tampilStory(i) {
   $("vwWaktu").textContent = waktuStory(item.created_at);
   const hapusEl = $("vwHapus");
   if (hapusEl) hapusEl.style.display = (storyPemilik === me.id) ? "block" : "none";
+  const hatiEl = $("vwHati");
+  if (hatiEl) {
+    hatiEl.style.display = (storyPemilik === me.id) ? "none" : "";
+    const sudahSuka = !!localStorage.getItem("posel.suka." + item.id);
+    hatiEl.textContent = sudahSuka ? "❤️" : "🤍";
+    hatiEl.classList.toggle("on", sudahSuka);
+  }
   let isi = "";
   if (item.kind === "teks") {
     isi = `<div class="vw-teks" style="background:linear-gradient(160deg,${safeWarna(item.warna)},#111)">${esc(item.teks || "")}</div>`;
@@ -2051,8 +2060,9 @@ function balasStory() {
   if (!item) return;
   const uid = item.user_id;
   if (uid === me.id) { alert("Ini story kamu sendiri."); return; }
-  const u = kontakSaya.find((k) => k.id === uid);
-  if (!u) { alert("Kontak tidak ditemukan."); return; }
+  const u = kontakSaya.find((k) => k.id === uid)
+    || ((storyKontak.find((g) => g.user.id === uid) || {}).user);
+  if (!u) { alert("Kontak tidak ditemukan. Buka lewat daftar chat."); return; }
   tutupViewer();
   gantiHalaman("main");
   pindahTab("tabChat");
@@ -2060,10 +2070,26 @@ function balasStory() {
 }
 async function sukaStory() {
   const item = storyAktif[storyIdx];
-  if (!item) return;
+  if (!item) { toastPosel("Story tidak ada."); return; }
+  if (item.user_id === me.id) { toastPosel("Ini story kamu sendiri."); return; }
+  const hati = $("vwHati");
+  const kunci = "posel.suka." + item.id;
+  if (localStorage.getItem(kunci)) {
+    if (hati) hati.classList.add("on");
+    toastPosel("Kamu sudah menyukai story ini.");
+    return;
+  }
+  if (hati) { hati.textContent = "❤️"; hati.classList.add("on"); }
+  try { localStorage.setItem(kunci, "1"); } catch (e) {}
   $("vwBody").style.transition = "transform .18s";
   $("vwBody").style.transform = "scale(.97)";
   setTimeout(() => { $("vwBody").style.transform = ""; }, 180);
+  toastPosel("❤️ Suka terkirim");
+  if (mode === "cloud" && sb) {
+    sb.from("posel_messages").insert({ sender_id: me.id, recipient_id: item.user_id, group_id: null, kind: "text", body: "❤️ Suka story kamu", is_broadcast: false, status: "sent" })
+      .then((r) => { if (r && r.error) throw r.error; })
+      .catch(() => { try { localStorage.removeItem(kunci); } catch (e) {} toastPosel("Gagal kirim suka, coba lagi."); });
+  }
 }
 
 /* ---------- Ping di latar (APK) ---------- */
